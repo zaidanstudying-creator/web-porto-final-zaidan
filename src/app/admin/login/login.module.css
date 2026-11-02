@@ -1,0 +1,14 @@
+.page { min-height: 100svh; display: grid; place-items: center; padding: 2rem 1.25rem; }
+.panel { width: min(100%, 27rem); border: 1px solid var(--border); background: var(--surface); padding: clamp(1.5rem, 5vw, 2.5rem); }
+.eyebrow { color: var(--muted); font-size: .68rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
+.title { margin: 1.15rem 0 .5rem; font-size: clamp(2rem, 8vw, 2.8rem); font-weight: 500; letter-spacing: -.065em; line-height: 1.05; }
+.description { margin: 0 0 2rem; color: var(--muted); font-size: .9rem; }
+.form { display: grid; gap: 1.1rem; }
+.label { display: grid; gap: .45rem; color: #c8cbc7; font-size: .78rem; }
+.input { width: 100%; min-height: 2.9rem; border: 1px solid var(--border); border-radius: 0; background: #141617; padding: .7rem .8rem; color: var(--foreground); font: inherit; }
+.input:focus-visible { outline: 1px solid var(--cyan); outline-offset: 2px; }
+.button { min-height: 3rem; margin-top: .35rem; border: 1px solid var(--cyan); background: var(--cyan); color: #101112; font: inherit; font-size: .82rem; font-weight: 650; cursor: pointer; }
+.button:hover { background: transparent; color: var(--cyan); }
+.message { border-left: 2px solid var(--cyan); margin: 0 0 1rem; padding: .65rem .8rem; color: var(--foreground); font-size: .82rem; }
+.footnote { margin: 1.5rem 0 0; color: var(--muted); font-size: .75rem; }
+.setup { border: 1px solid var(--border); padding: 1rem; color: var(--muted); font-size: .85rem; line-height: 1.7; overflow-wrap: anywhere; }

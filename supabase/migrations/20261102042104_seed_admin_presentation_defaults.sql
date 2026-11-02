@@ -1,0 +1,33 @@
+-- Seed defaults only for missing presentation controls so every built-in setting
+-- can be edited immediately from the CMS without overwriting existing values.
+insert into public.site_settings (setting_key, setting_value) values
+  ('appearance.primary_accent', '"#7FF3FF"'::jsonb),
+  ('appearance.secondary_accent', '"#FF5A36"'::jsonb),
+  ('hero.text', '"Ihsan Fawwas Zaidan"'::jsonb),
+  ('hero.tech_loop', '["HTML","CSS","JavaScript","Laravel","PHP"]'::jsonb),
+  ('scroll_velocity.texts', '["Full Stack Web Developer","AI Assistant"]'::jsonb),
+  ('profile_card.name', '"Ihsan Fawwas Zaidan"'::jsonb),
+  ('profile_card.title', '"Full Stack Web Developer"'::jsonb),
+  ('profile_card.status', '"Online"'::jsonb),
+  ('profile_card.handle', '"@ihsanfawwaszaidan"'::jsonb),
+  ('profile_card.icon_pattern', '"/images/profile-pattern.svg"'::jsonb),
+  ('scroll_expand.title', '"BEHIND THE CODE"'::jsonb),
+  ('scroll_expand.scroll_hint', '"Scroll to explore"'::jsonb),
+  ('scroll_expand.media_path', '"/images/about-placeholder.svg"'::jsonb),
+  ('lanyard.back_image', '"/images/lanyard-back.svg"'::jsonb),
+  ('lanyard.strap_image', '"/images/lanyard-strap.svg"'::jsonb),
+  ('lanyard.card_color', '"#ffffff"'::jsonb),
+  ('lanyard.strap_color', '"#eab308"'::jsonb),
+  ('lanyard.size', '0.72'::jsonb),
+  ('glow_cursor.color', '"#7FF3FF"'::jsonb),
+  ('glow_cursor.intensity', '1'::jsonb),
+  ('components.pill_nav.enabled', 'true'::jsonb),
+  ('components.tech_text.enabled', 'true'::jsonb),
+  ('components.text_loop.enabled', 'true'::jsonb),
+  ('components.scroll_velocity.enabled', 'true'::jsonb),
+  ('components.profile_card.enabled', 'true'::jsonb),
+  ('components.lanyard.enabled', 'true'::jsonb),
+  ('components.card_swap.enabled', 'true'::jsonb),
+  ('components.scroll_expand.enabled', 'true'::jsonb),
+  ('components.glow_cursor.enabled', 'true'::jsonb)
+on conflict (setting_key) do nothing;

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" fill="none">
+  <rect width="1600" height="1000" fill="#1B1D1E"/>
+  <path d="M0 780H1600M0 820H1600M0 860H1600" stroke="#343839"/>
+  <path d="M180 0V1000M1420 0V1000" stroke="#343839"/>
+  <circle cx="800" cy="465" r="218" stroke="#7FF3FF" stroke-opacity=".45" stroke-width="2"/>
+  <circle cx="800" cy="465" r="180" stroke="#929693" stroke-opacity=".35"/>
+  <path d="M800 247V683M582 465H1018" stroke="#343839"/>
+  <text x="180" y="170" fill="#929693" font-family="monospace" font-size="18" letter-spacing="4">IZ / 01</text>
+  <text x="180" y="920" fill="#929693" font-family="monospace" font-size="18" letter-spacing="5">PLACEHOLDER / PERSONAL IMAGE NOT PROVIDED</text>
+</svg>

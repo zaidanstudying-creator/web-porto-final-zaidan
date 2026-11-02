@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="960" viewBox="0 0 640 960">
+  <rect width="640" height="960" fill="#1b1d1e"/>
+  <rect x="32" y="32" width="576" height="896" fill="none" stroke="#343839" stroke-width="2"/>
+  <text x="64" y="112" fill="#7ff3ff" font-family="Arial, sans-serif" font-size="23" letter-spacing="4">PLACEHOLDER ASSET</text>
+  <path d="M64 144h512" stroke="#525958" stroke-width="2"/>
+  <text x="64" y="512" fill="#f1f0eb" font-family="Arial, sans-serif" font-size="34">Registry smoke test</text>
+  <text x="64" y="566" fill="#929693" font-family="Arial, sans-serif" font-size="20">This is not a real ID card.</text>
+</svg>

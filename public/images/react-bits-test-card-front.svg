@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="960" viewBox="0 0 640 960">
+  <rect width="640" height="960" fill="#f1f0eb"/>
+  <path d="M0 0h640v18H0z" fill="#7ff3ff"/>
+  <text x="64" y="112" fill="#101112" font-family="Arial, sans-serif" font-size="23" letter-spacing="4">TEST PREVIEW ONLY</text>
+  <path d="M64 144h512" stroke="#929693" stroke-width="2"/>
+  <text x="64" y="720" fill="#101112" font-family="Arial, sans-serif" font-size="54" font-weight="700">LANYARD</text>
+  <text x="64" y="766" fill="#545a58" font-family="Arial, sans-serif" font-size="21" letter-spacing="2">NO PERSONAL DATA</text>
+  <text x="64" y="900" fill="#545a58" font-family="Arial, sans-serif" font-size="16" letter-spacing="3">REACT BITS REGISTRY CHECK</text>
+</svg>
