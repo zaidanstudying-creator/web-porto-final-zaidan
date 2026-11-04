@@ -3,11 +3,111 @@
 import { useEffect, useRef, useState } from 'react';
 
 function RefineFrame({ src, alt, aspectRatio = '4 / 3' }) {
+  const frameRef = useRef(null);
+  const imageRef = useRef(null);
+  const canvasRef = useRef(null);
   const [loaded, setLoaded] = useState(false);
-  return <div className="certificate-refine-frame" style={{ aspectRatio }} data-loaded={loaded}>
-    <img src={src} alt={alt} onLoad={() => setLoaded(true)} onError={() => setLoaded(true)} />
+
+  useEffect(() => {
+    const frame = frameRef.current;
+    const image = imageRef.current;
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext('2d');
+    if (!frame || !image || !canvas || !context) return undefined;
+
+    let animationFrame = 0;
+    let resizeObserver;
+    let startedAt = 0;
+    let currentBlock = 48;
+    let finished = false;
+    const blockSizes = [48, 32, 20, 12, 8, 5, 3, 2, 1];
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const draw = (blockSize) => {
+      const box = frame.getBoundingClientRect();
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const width = Math.max(1, Math.round(box.width * dpr));
+      const height = Math.max(1, Math.round(box.height * dpr));
+      if (canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
+      }
+
+      const lowRes = document.createElement('canvas');
+      lowRes.width = Math.max(1, Math.ceil(width / blockSize));
+      lowRes.height = Math.max(1, Math.ceil(height / blockSize));
+      const lowContext = lowRes.getContext('2d');
+      if (!lowContext) return;
+      lowContext.fillStyle = '#27272a';
+      lowContext.fillRect(0, 0, lowRes.width, lowRes.height);
+      const fit = Math.min(lowRes.width / image.naturalWidth, lowRes.height / image.naturalHeight);
+      const imageWidth = image.naturalWidth * fit;
+      const imageHeight = image.naturalHeight * fit;
+      lowContext.drawImage(image, (lowRes.width - imageWidth) / 2, (lowRes.height - imageHeight) / 2, imageWidth, imageHeight);
+
+      context.clearRect(0, 0, width, height);
+      context.imageSmoothingEnabled = blockSize === 1;
+      if (blockSize === 1) context.imageSmoothingQuality = 'high';
+      context.drawImage(lowRes, 0, 0, width, height);
+    };
+
+    const animate = (now) => {
+      if (!startedAt) startedAt = now;
+      const elapsed = now - startedAt;
+      const step = Math.min(blockSizes.length - 1, Math.floor(elapsed / 105));
+      currentBlock = blockSizes[step];
+      draw(currentBlock);
+      if (step >= blockSizes.length - 1) {
+        finished = true;
+        setLoaded(true);
+        animationFrame = 0;
+      } else {
+        animationFrame = requestAnimationFrame(animate);
+      }
+    };
+
+    const begin = () => {
+      if (!image.naturalWidth) return;
+      cancelAnimationFrame(animationFrame);
+      startedAt = 0;
+      finished = false;
+      setLoaded(false);
+      if (reducedMotion) {
+        currentBlock = 1;
+        draw(1);
+        setLoaded(true);
+        return;
+      }
+      draw(blockSizes[0]);
+      animationFrame = requestAnimationFrame(animate);
+    };
+
+    const resize = () => {
+      if (image.naturalWidth) draw(finished ? 1 : currentBlock);
+    };
+
+    if (image.complete && image.naturalWidth) begin();
+    else image.addEventListener('load', begin, { once: true });
+    image.addEventListener('error', () => setLoaded(true), { once: true });
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(resize);
+      resizeObserver.observe(frame);
+    }
+    window.addEventListener('resize', resize, { passive: true });
+
+    return () => {
+      cancelAnimationFrame(animationFrame);
+      image.removeEventListener('load', begin);
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', resize);
+    };
+  }, [src]);
+
+  return <div ref={frameRef} className="certificate-refine-frame" style={{ aspectRatio }} data-loaded={loaded}>
+    <img ref={imageRef} className="certificate-refine-source" src={src} alt={alt} />
+    <canvas ref={canvasRef} className="certificate-refine-canvas" aria-hidden="true" />
     <span className="certificate-refine-sweep" aria-hidden="true" />
-    {!loaded && <span className="certificate-refine-status" role="status">Loading preview…</span>}
+    {!loaded && <span className="certificate-refine-status" role="status">Refining preview…</span>}
   </div>;
 }
 
