@@ -70,6 +70,8 @@ const titleField = {
 const tableForSection = (section) => section === 'certificates' ? 'history_entries' : section;
 const rowsForSection = (data, section) => section === 'certificates'
   ? (data.history_entries ?? []).filter((row) => /sertifikat|certificate/i.test(row.category ?? ''))
+  : section === 'history_entries'
+    ? (data.history_entries ?? []).filter((row) => !/sertifikat|certificate/i.test(row.category ?? ''))
   : data[section] ?? [];
 
 const settingDefaults = [

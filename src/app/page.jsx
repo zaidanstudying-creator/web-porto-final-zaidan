@@ -52,6 +52,7 @@ export default async function HomePage() {
   const title = profile?.professional_title || "Full Stack Web Developer";
   const technologies = content?.technologies?.length ? content.technologies.map((item) => item.name) : technology;
   const certificates = content?.history?.filter((item) => /sertifikat|certificate/i.test(item.category || '')) ?? [];
+  const historyEntries = content?.history?.filter((item) => !/sertifikat|certificate/i.test(item.category || '')) ?? [];
   const velocityTexts = settings['scroll_velocity.texts'];
   const primaryAccent = typeof settings['appearance.primary_accent'] === 'string' ? settings['appearance.primary_accent'] : undefined;
   const secondaryAccent = typeof settings['appearance.secondary_accent'] === 'string' ? settings['appearance.secondary_accent'] : undefined;
@@ -134,7 +135,7 @@ export default async function HomePage() {
 
       <section className="page-shell section history-section" id="history" aria-labelledby="history-title">
         <SectionHeading number="05" title="History" id="history-title" description="A timeline of milestones and personal achievements."></SectionHeading>
-        <div className="history-line">{content?.history?.length ? content.history.map((item) => <article className="managed-entry" key={item.id}><span className="history-marker" aria-hidden="true" /><span className="entry-index">{new Date(`${item.event_date}T00:00:00`).getFullYear()}</span><div><h3>{item.title}</h3><p>{item.category}</p><small>{item.description}</small>{item.image_url && <img className="history-image" src={item.image_url} alt={item.title} />}</div></article>) : <p>Published milestones will appear here.</p>}</div>
+        <div className="history-line">{historyEntries.length ? historyEntries.map((item) => <article className="managed-entry" key={item.id}><span className="history-marker" aria-hidden="true" /><span className="entry-index">{new Date(`${item.event_date}T00:00:00`).getFullYear()}</span><div><h3>{item.title}</h3><p>{item.category}</p><small>{item.description}</small>{item.image_url && <img className="history-image" src={item.image_url} alt={item.title} />}</div></article>) : <p>Published milestones will appear here.</p>}</div>
       </section>
 
       <section className="page-shell section certificates-section" id="certificates" aria-labelledby="certificates-title">
