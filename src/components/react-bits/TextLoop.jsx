@@ -119,6 +119,7 @@ const TextLoop = ({
   tilt = 0,
   fontSize = 46,
   fontWeight = 800,
+  textOffsetY = 0,
   letterSpacing = 2,
   uppercase = true,
   color,
@@ -539,7 +540,7 @@ const TextLoop = ({
                 textLength={crossFit}
                 lengthAdjust="spacing"
               >
-                <textPath ref={crossHeadRef} href={`#${crossId}`} startOffset={0}>
+                <textPath ref={crossHeadRef} href={`#${crossId}`} startOffset={0} dy={textOffsetY}>
                   {crossText}
                 </textPath>
               </text>
@@ -553,7 +554,7 @@ const TextLoop = ({
                 textLength={crossFit}
                 lengthAdjust="spacing"
               >
-                <textPath ref={crossTailRef} href={`#${crossId}`} startOffset={0}>
+                <textPath ref={crossTailRef} href={`#${crossId}`} startOffset={0} dy={textOffsetY}>
                   {crossText}
                 </textPath>
               </text>
@@ -599,7 +600,7 @@ const TextLoop = ({
               textLength={fitLength}
               lengthAdjust="spacing"
             >
-              <textPath ref={headRef} href={`#${pathId}`} startOffset={0}>
+              <textPath ref={headRef} href={`#${pathId}`} startOffset={0} dy={textOffsetY}>
                 {loopText}
               </textPath>
             </text>
@@ -613,7 +614,7 @@ const TextLoop = ({
               textLength={fitLength}
               lengthAdjust="spacing"
             >
-              <textPath ref={tailRef} href={`#${pathId}`} startOffset={0}>
+              <textPath ref={tailRef} href={`#${pathId}`} startOffset={0} dy={textOffsetY}>
                 {loopText}
               </textPath>
             </text>

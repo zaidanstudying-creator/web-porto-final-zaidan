@@ -5,7 +5,7 @@ import Image from "next/image";
 import StaggeredMenu from "@/components/react-bits/StaggeredMenu";
 
 const componentImports = {
-  PillNav: () => import("@/components/react-bits/PillNav"),
+  GooeyNav: () => import("@/components/react-bits/GooeyNav"),
   TechText: () => import("@/components/react-bits/TechText"),
   TextLoop: () => import("@/components/react-bits/TextLoop"),
   ScrollVelocity: () => import("@/components/react-bits/ScrollVelocity"),
@@ -84,16 +84,13 @@ export function PortfolioNavigation({ socialItems = [], showDesktop = true }) {
 
   return (
     <>
-    {showDesktop && <Mounted name="PillNav" eager className="portfolio-pill-nav">
+    {showDesktop && <Mounted name="GooeyNav" eager className="portfolio-pill-nav">
       {(mod) => {
-        const PillNav = mod.default;
-        return <PillNav
-          items={navItems} activeHref={activeHref} theme="dark" layout="split" size="md"
-          surface="glass" itemStyle="plain" hoverEffect="glide" indicator="dot"
-          highlightColor="#7FF3FF" highlightTextColor="#101112" barColor="rgba(27,29,30,.96)"
-          textColor="#F1F0EB" bounce={0.3} stretch={0.5} intro collapse="auto"
-          ariaLabel="Portfolio sections" className="portfolio-nav-source"
-        />;
+        const GooeyNav = mod.default;
+        return <GooeyNav items={navItems} activeIndex={navItems.findIndex((item) => item.href === activeHref)}
+          initialActiveIndex={0} theme="dark" size="md" frame particleCount={15} spread={44}
+          animationTime={600} timeVariance={300} gooeyness={0.5} wobble={0.35} hoverEffect
+          className="portfolio-gooey-nav" />;
       }}
     </Mounted>}
     <div className="portfolio-staggered-nav">
@@ -127,8 +124,8 @@ export function TechnologyMarquee({ technologies = [], settings = {} }) {
     {(mod) => {
       const TextLoop = mod.default;
       return <TextLoop text={text} shape="line" speed={120} direction="forward" separator="✦"
-        curviness={90} tilt={0} fontSize={58} fontWeight={800} letterSpacing={1} uppercase
-        ribbon ribbonColor={settings['appearance.secondary_accent'] || "#ff5a36"} ribbonWidth={88}
+        curviness={90} tilt={0} fontSize={54} fontWeight={800} textOffsetY={8} letterSpacing={1} uppercase
+        ribbon ribbonColor={settings['appearance.secondary_accent'] || "#ff5a36"} ribbonWidth={96}
         edgeFade={0} cross crossAngle={14} draggable scrollBoost={0} outline={false} pauseOnHover
         outlineWidth={1.5} color="#120f17" className="hero-tech-loop" />;
     }}
@@ -258,6 +255,51 @@ export function LanyardMount({ profile, settings = {} }) {
   </div>;
 }
 
+function ProjectImageCarousel({ project }) {
+  const images = [
+    ...(project.cover_url ? [{ url: project.cover_url, label: "Project cover" }] : []),
+    ...(project.preview_urls ?? []).map((url, index) => ({ url, label: `Project preview ${index + 1}` })),
+  ];
+  const [activeIndex, setActiveIndex] = useState(0);
+  const total = images.length;
+  const wrap = (index) => (index + total) % total;
+
+  if (!total) return <div className="project-image-empty">No project images have been added yet.</div>;
+
+  const carousel = total > 3;
+  const thumbnails = carousel
+    ? [
+        { index: wrap(activeIndex - 1), position: "before" },
+        { index: activeIndex, position: "active" },
+        { index: wrap(activeIndex + 1), position: "after" },
+      ]
+    : images.map((_, index) => ({ index, position: index === activeIndex ? "active" : "rest" }));
+
+  return (
+    <section className="project-image-carousel" aria-label="Project images">
+      <a className="project-image-main" href={images[activeIndex].url} target="_blank" rel="noreferrer"
+        aria-label={`Open ${images[activeIndex].label.toLowerCase()} in a new tab`}>
+        <img src={images[activeIndex].url} alt={`${project.title} — ${images[activeIndex].label}`} />
+      </a>
+      {total > 1 && <div className={`project-image-thumbnails${carousel ? " project-image-thumbnails--carousel" : ""}`}>
+        {carousel && <button className="project-image-arrow" type="button" aria-label="Previous project image"
+          onClick={() => setActiveIndex((index) => wrap(index - 1))}>‹</button>}
+        <div className="project-image-thumb-track">
+          {thumbnails.map(({ index, position }) => <button className="project-image-thumb" data-position={position}
+            type="button" key={`${images[index].url}-${position}`} aria-label={`Show ${images[index].label.toLowerCase()}`}
+            aria-pressed={index === activeIndex} onClick={() => setActiveIndex(index)}>
+            <img src={images[index].url} alt="" loading="lazy" />
+          </button>)}
+        </div>
+        {carousel && <button className="project-image-arrow" type="button" aria-label="Next project image"
+          onClick={() => setActiveIndex((index) => wrap(index + 1))}>›</button>}
+      </div>}
+      {total > 1 && <p className="project-image-count" aria-live="polite">{activeIndex + 1} / {total}</p>}
+      {total === 1 && <p className="project-image-count">Add project screenshots in Admin → Projects → Project preview images.</p>}
+    </section>
+  );
+}
+
 export function ProjectCardSwap({ projects = [] }) {
   const [cardWidth, setCardWidth] = useState(440);
   const [selectedProject, setSelectedProject] = useState(null);
@@ -348,8 +390,8 @@ export function ProjectCardSwap({ projects = [] }) {
           onClick={() => detailsDialogRef.current?.close()}>×</button>
         <p className="project-detail-kicker">PROJECT DETAILS</p>
         <h2 id="project-detail-title">{selectedProject.title}</h2>
-        {selectedProject.cover_url && <img className="project-detail-cover" src={selectedProject.cover_url}
-          alt={`${selectedProject.title} project cover`} onError={(event) => event.currentTarget.remove()} />}
+        {selectedProject.subtitle && <p className="project-detail-subtitle">{selectedProject.subtitle}</p>}
+        <ProjectImageCarousel key={selectedProject.id} project={selectedProject} />
         {selectedProject.summary && <p className="project-detail-summary">{selectedProject.summary}</p>}
         {selectedProject.description && <p className="project-detail-description">{selectedProject.description}</p>}
         {selectedProject.technologies?.length > 0 && <div className="project-detail-tech" aria-label="Technologies used">

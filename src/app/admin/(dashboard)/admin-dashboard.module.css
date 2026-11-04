@@ -89,6 +89,14 @@
 .imagePreview { display: flex; min-width: 0; align-items: center; gap: .7rem; border: 1px solid #343839; padding: .5rem; }
 .imagePreview img { width: 5rem; height: 4rem; flex: 0 0 auto; object-fit: contain; background: #1b1d1e; }
 .imagePreview code { overflow-wrap: anywhere; color: #7ff3ff; font-size: .62rem; }
+.fieldLabel { color: #c8cbc7; font-size: .71rem; }
+.fieldHint { color: #929693; font-size: .64rem; }
+.imagePreviewGrid { display: grid; grid-template-columns: repeat(auto-fill,minmax(10rem,1fr)); gap: .65rem; }
+.imagePreviewItem { display: grid; min-width: 0; gap: .4rem; margin: 0; border: 1px solid #343839; padding: .45rem; }
+.imagePreviewItem > img { width: 100%; height: 7rem; object-fit: contain; background: #101112; }
+.imagePreviewItem figcaption { display: flex; align-items: center; justify-content: space-between; gap: .35rem; }
+.imagePreviewItem code { overflow: hidden; color: #929693; font-size: .58rem; text-overflow: ellipsis; white-space: nowrap; }
+.imagePreviewItem button { flex: 0 0 auto; border: 0; padding: .25rem; background: transparent; color: #ff9a86; font: inherit; font-size: .63rem; cursor: pointer; }
 .wide { grid-column: 1 / -1; }
 .toggleField { display: flex; min-height: 2.7rem; align-items: center; gap: .65rem; border-bottom: 1px solid #343839; color: #c8cbc7; font-size: .73rem; cursor: pointer; }
 .toggleField input { width: 1.1rem; height: 1.1rem; accent-color: #7ff3ff; }
@@ -107,6 +115,10 @@
 .settingsIntro h2,.mediaUpload h2 { margin: 0; font-size: .92rem; font-weight: 550; }
 .settingsIntro p,.mediaUpload p { margin: .3rem 0 .9rem; color: #929693; font-size: .7rem; }
 .defaults { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0 1.5rem; }
+.settingTabs { display: flex; flex-wrap: wrap; gap: .45rem; margin: .9rem 0 .4rem; border-bottom: 1px solid #343839; padding-bottom: .65rem; }
+.settingTab,.settingTabActive { min-height: 2.25rem; border: 1px solid #3a4041; padding: .4rem .7rem; background: transparent; color: #a5aaa6; font: inherit; font-size: .7rem; cursor: pointer; }
+.settingTab:hover,.settingTabActive { border-color: #657778; color: #7ff3ff; }
+.settingTabActive { background: #1b2021; }
 .settingGroup { display: grid; grid-column: 1 / -1; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0 1.5rem; padding-top: 1rem; }
 .settingGroup h3 { grid-column: 1 / -1; margin: 0; border-bottom: 1px solid #343839; padding: .55rem 0; color: #7ff3ff; font-size: .72rem; font-weight: 600; letter-spacing: .04em; }
 .defaultRow { display: flex; min-width: 0; min-height: 2.25rem; align-items: center; justify-content: space-between; gap: .8rem; border-top: 1px solid #292d2e; }

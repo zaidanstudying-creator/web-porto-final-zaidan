@@ -1,8 +1,8 @@
 export default function Loading() {
   return (
-    <main className="page-shell loading-state" aria-live="polite">
-      <span className="loading-mark" aria-hidden="true">IZ</span>
-      <p>Loading portfolio…</p>
+    <main className="loading-state" role="status" aria-label="Loading portfolio">
+      <span className="loader" aria-hidden="true" />
+      <span className="visually-hidden">Loading portfolio…</span>
     </main>
   );
 }

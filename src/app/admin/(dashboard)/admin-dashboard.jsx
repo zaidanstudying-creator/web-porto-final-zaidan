@@ -9,7 +9,7 @@ import styles from './admin-dashboard.module.css';
 const nav = [
   ['overview', 'Overview'], ['profiles', 'Profile'], ['projects', 'Projects'],
   ['technologies', 'Technologies'], ['skills', 'Skills'], ['experiences', 'Experience'],
-  ['history_entries', 'History'], ['social_links', 'Social links'], ['site_settings', 'Site settings'],
+  ['history_entries', 'History'], ['certificates', 'Sertifikat'], ['social_links', 'Social links'], ['site_settings', 'Section editor'],
   ['contact_messages', 'Inbox'], ['media_assets', 'Media']
 ];
 
@@ -22,8 +22,9 @@ const fields = {
   ],
   projects: [
     ['title', 'Project title', 'text', true], ['slug', 'URL slug', 'text', true],
-    ['summary', 'Short summary', 'textarea'], ['description', 'Description', 'textarea'],
-    ['cover_path', 'Cover image', 'image'], ['github_url', 'GitHub URL', 'url'], ['demo_url', 'Live demo URL', 'url'],
+    ['subtitle', 'Subtitle', 'text'], ['summary', 'Short summary', 'textarea'], ['description', 'Description', 'textarea'],
+    ['cover_path', 'Cover image', 'image'], ['preview_paths', 'Project preview images', 'images'],
+    ['github_url', 'GitHub URL', 'url'], ['demo_url', 'Live demo URL', 'url'],
     ['technology_ids', 'Technologies used', 'multi'],
     ['sort_order', 'Display order', 'number'], ['featured', 'Featured project', 'boolean'], ['is_published', 'Published', 'boolean']
   ],
@@ -43,6 +44,13 @@ const fields = {
   history_entries: [
     ['title', 'Milestone', 'text', true], ['event_date', 'Date', 'date', true], ['category', 'Category', 'text'],
     ['description', 'Description', 'textarea'], ['image_path', 'Milestone image', 'image'],
+    ['preview_paths', 'Additional certificate preview images', 'images'],
+    ['sort_order', 'Display order', 'number'], ['is_published', 'Published', 'boolean']
+  ],
+  certificates: [
+    ['title', 'Certificate title', 'text', true], ['event_date', 'Issue date', 'date', true],
+    ['description', 'Description', 'textarea'], ['image_path', 'Certificate cover image', 'image'],
+    ['preview_paths', 'Additional certificate preview images', 'images'],
     ['sort_order', 'Display order', 'number'], ['is_published', 'Published', 'boolean']
   ],
   social_links: [
@@ -56,8 +64,13 @@ const fields = {
 
 const titleField = {
   profiles: 'full_name', projects: 'title', technologies: 'name', skills: 'name',
-  experiences: 'position', history_entries: 'title', social_links: 'platform', site_settings: 'setting_key'
+  experiences: 'position', history_entries: 'title', certificates: 'title', social_links: 'platform', site_settings: 'setting_key'
 };
+
+const tableForSection = (section) => section === 'certificates' ? 'history_entries' : section;
+const rowsForSection = (data, section) => section === 'certificates'
+  ? (data.history_entries ?? []).filter((row) => /sertifikat|certificate/i.test(row.category ?? ''))
+  : data[section] ?? [];
 
 const settingDefaults = [
   ['appearance.primary_accent', '#7FF3FF'], ['appearance.secondary_accent', '#FF5A36'],
@@ -168,7 +181,8 @@ const settingGroups = [
 
 function blankRecord(section) {
   if (section === 'profiles') return { is_primary: true };
-  if (section === 'projects') return { sort_order: 0, featured: false, is_published: false, technology_ids: [] };
+  if (section === 'projects') return { sort_order: 0, featured: false, is_published: false, technology_ids: [], preview_paths: [] };
+  if (section === 'certificates') return { category: 'Sertifikat', sort_order: 0, is_published: false, preview_paths: [] };
   if (section === 'technologies' || section === 'skills' || section === 'social_links') return { sort_order: 0, is_visible: true };
   if (section === 'experiences' || section === 'history_entries') return { sort_order: 0, is_published: false };
   if (section === 'site_settings') return { setting_key: '', setting_value: '' };
@@ -178,7 +192,7 @@ function blankRecord(section) {
 function recordName(section, row) {
   if (section === 'contact_messages') return row.subject || row.name;
   if (section === 'media_assets') return row.original_name;
-  return row[titleField[section]] || 'Untitled';
+  return row[titleField[section] || (section === 'certificates' ? 'title' : '')] || 'Untitled';
 }
 
 function sortedRows(section, rows) {
@@ -198,8 +212,9 @@ export default function AdminDashboard({ initialData, initialError }) {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState(null);
   const [uploadFile, setUploadFile] = useState(null);
+  const [activeSettingGroup, setActiveSettingGroup] = useState(settingGroups[0][0]);
 
-  const rows = useMemo(() => sortedRows(section, data[section] ?? []), [data, section]);
+  const rows = useMemo(() => sortedRows(section, rowsForSection(data, section)), [data, section]);
   const visibleRows = useMemo(() => {
     const query = search.trim().toLowerCase();
     return query ? rows.filter((row) => `${recordName(section, row)} ${row.category ?? ''}`.toLowerCase().includes(query)) : rows;
@@ -217,7 +232,11 @@ export default function AdminDashboard({ initialData, initialError }) {
   function editRow(row) {
     setSelectedId(row.id);
     setForm({ ...row,
-      ...(section === 'projects' ? { technology_ids: data.project_technologies.filter((item) => item.project_id === row.id).map((item) => item.technology_id) } : {}),
+      ...(section === 'projects' ? {
+        technology_ids: data.project_technologies.filter((item) => item.project_id === row.id).map((item) => item.technology_id),
+        preview_paths: Array.isArray(row.preview_paths) ? row.preview_paths : []
+      } : {}),
+      ...(section === 'certificates' ? { preview_paths: Array.isArray(row.preview_paths) ? row.preview_paths : [] } : {}),
       ...(section === 'site_settings' ? { setting_value: JSON.stringify(row.setting_value, null, 2) } : {})
     });
     setNotice(null);
@@ -240,6 +259,7 @@ export default function AdminDashboard({ initialData, initialError }) {
     setBusy(true);
     setNotice(null);
     const payload = {};
+    const table = tableForSection(section);
     const selectedTechnologyIds = section === 'projects' ? form.technology_ids ?? [] : [];
     for (const [name, , type] of schema) {
       let value = form[name];
@@ -255,9 +275,10 @@ export default function AdminDashboard({ initialData, initialError }) {
       payload[name] = value;
     }
     if (section === 'profiles') payload.is_primary = true;
+    if (section === 'certificates') payload.category = 'Sertifikat';
     const request = selectedId
-      ? supabase.from(section).update(payload).eq('id', selectedId)
-      : supabase.from(section).insert(payload);
+      ? supabase.from(table).update(payload).eq('id', selectedId)
+      : supabase.from(table).insert(payload);
     const { data: saved, error } = await request.select().single();
     if (error) { setBusy(false); setNotice({ kind: 'error', text: error.message }); return; }
     if (section === 'projects') {
@@ -279,9 +300,9 @@ export default function AdminDashboard({ initialData, initialError }) {
       ] }));
     }
     setBusy(false);
-    setData((current) => ({ ...current, [section]: selectedId
-      ? current[section].map((item) => item.id === selectedId ? saved : item)
-      : [...current[section], saved] }));
+    setData((current) => ({ ...current, [table]: selectedId
+      ? current[table].map((item) => item.id === selectedId ? saved : item)
+      : [...current[table], saved] }));
     setSelectedId(saved.id);
     setForm({ ...saved,
       ...(section === 'projects' ? { technology_ids: selectedTechnologyIds } : {}),
@@ -294,10 +315,11 @@ export default function AdminDashboard({ initialData, initialError }) {
     if (!window.confirm(`Hapus “${recordName(section, row)}”?`)) return;
     setBusy(true);
     setNotice(null);
-    const { error } = await supabase.from(section).delete().eq('id', row.id);
+    const table = tableForSection(section);
+    const { error } = await supabase.from(table).delete().eq('id', row.id);
     setBusy(false);
     if (error) { setNotice({ kind: 'error', text: error.message }); return; }
-    setData((current) => ({ ...current, [section]: current[section].filter((item) => item.id !== row.id) }));
+    setData((current) => ({ ...current, [table]: current[table].filter((item) => item.id !== row.id) }));
     if (selectedId === row.id) { setSelectedId(null); setForm(null); }
     setNotice({ kind: 'success', text: 'Konten dihapus.' });
   }
@@ -370,6 +392,29 @@ export default function AdminDashboard({ initialData, initialError }) {
     }
   }
 
+  async function uploadImagesToField(files, currentPaths) {
+    setBusy(true);
+    setNotice(null);
+    const uploaded = [];
+    try {
+      for (const file of files) uploaded.push(await saveImageFile(file));
+      const paths = [...currentPaths, ...uploaded.map((asset) => asset.object_path)];
+      if (uploaded.length) {
+        setData((current) => ({ ...current, media_assets: [...uploaded, ...current.media_assets] }));
+        changeField('preview_paths', paths);
+      }
+      setNotice({ kind: 'success', text: `${uploaded.length} gambar ditambahkan.` });
+    } catch (error) {
+      if (uploaded.length) {
+        setData((current) => ({ ...current, media_assets: [...uploaded, ...current.media_assets] }));
+        changeField('preview_paths', [...currentPaths, ...uploaded.map((asset) => asset.object_path)]);
+      }
+      reportUploadError(error);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function uploadMedia(event) {
     event.preventDefault();
     const uploadForm = event.currentTarget;
@@ -420,6 +465,38 @@ export default function AdminDashboard({ initialData, initialError }) {
       try { parsedSetting = JSON.parse(value); } catch { parsedSetting = null; }
     }
     const isImageSetting = Boolean(settingKey && imageSettingKeys.has(settingKey));
+    if (type === 'images') {
+      const imagePaths = Array.isArray(value) ? value : [];
+      const libraryImages = data.media_assets.filter((asset) => asset.bucket_id === 'portfolio-public');
+      const imageUrl = (path) => /^(https?:)?\/\//i.test(path) || path.startsWith('/')
+        ? path : supabase.storage.from('portfolio-public').getPublicUrl(path).data.publicUrl;
+      return <div className={`${styles.imageField} ${styles.wide}`} key={name}>
+        <span className={styles.fieldLabel}>{label}</span>
+        <div className={styles.imageTools}>
+          <select aria-label={`Add ${label} from uploaded images`} value="" disabled={busy}
+            onChange={(event) => {
+              const path = event.target.value;
+              if (path && !imagePaths.includes(path)) changeField(name, [...imagePaths, path]);
+            }}>
+            <option value="">Add from Media library…</option>
+            {libraryImages.filter((asset) => !imagePaths.includes(asset.object_path)).map((asset) => <option key={asset.id} value={asset.object_path}>{asset.original_name}</option>)}
+          </select>
+          <label className={`${styles.imageUploadButton} ${busy ? styles.imageUploadDisabled : ''}`}>
+            <span>{busy ? 'Uploading…' : 'Upload preview images'}</span>
+            <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple disabled={busy}
+              onChange={(event) => {
+                const files = Array.from(event.target.files ?? []);
+                event.target.value = '';
+                if (files.length) void uploadImagesToField(files, imagePaths);
+              }} />
+          </label>
+        </div>
+        {imagePaths.length ? <div className={styles.imagePreviewGrid}>{imagePaths.map((path, index) => <figure className={styles.imagePreviewItem} key={`${path}-${index}`}>
+          <img src={imageUrl(path)} alt={`${label} ${index + 1}`} />
+          <figcaption><code>{path}</code><button type="button" disabled={busy} onClick={() => changeField(name, imagePaths.filter((_, itemIndex) => itemIndex !== index))}>Remove</button></figcaption>
+        </figure>)}</div> : <small className={styles.fieldHint}>{section === 'history_entries' ? 'Unggah sisi belakang atau foto detail sertifikat agar tersedia di carousel preview.' : 'Unggah screenshot tambahan agar tampil di carousel detail project.'}</small>}
+      </div>;
+    }
     if (type === 'image' || isImageSetting) {
       let imagePath = isImageSetting ? parsedSetting : value;
       if (typeof imagePath !== 'string') imagePath = '';
@@ -534,7 +611,7 @@ export default function AdminDashboard({ initialData, initialError }) {
         </div>
         <div className={styles.overviewGrid}>
           <section className={styles.overviewBlock}><div className={styles.blockHead}><h2>Content sections</h2><span>{nav.length - 1} areas</span></div>
-            {nav.slice(1).map(([id, label]) => <button className={styles.overviewRow} type="button" key={id} onClick={() => openSection(id)}><span>{label}</span><strong>{id === 'contact_messages' ? data[id].length : data[id].length}</strong><span aria-hidden="true">↗</span></button>)}
+            {nav.slice(1).map(([id, label]) => <button className={styles.overviewRow} type="button" key={id} onClick={() => openSection(id)}><span>{label}</span><strong>{rowsForSection(data, id).length}</strong><span aria-hidden="true">↗</span></button>)}
           </section>
           <section className={styles.overviewBlock}><div className={styles.blockHead}><h2>Site settings</h2><span>Presentation</span></div>
             {settingDefaults.slice(0, 5).map(([key, defaultValue]) => {
@@ -546,8 +623,15 @@ export default function AdminDashboard({ initialData, initialError }) {
       </section> : null}
 
       {section === 'site_settings' && <section className={styles.settingsIntro}>
-        <div><h2>Built-in settings</h2><p>Each setting follows the public presentation allowlist in the database.</p></div>
-        <div className={styles.defaults}>{settingGroups.map(([title, prefix]) => <section className={styles.settingGroup} key={title}>
+        <div><h2>Edit by section</h2><p>Pilih bagian situs, lalu ubah konten atau tampilannya. Setiap bagian disimpan terpisah.</p></div>
+        <nav className={styles.settingTabs} aria-label="Portfolio sections to edit">
+          {settingGroups.map(([title]) => <button type="button" key={title} aria-pressed={activeSettingGroup === title}
+            className={activeSettingGroup === title ? styles.settingTabActive : styles.settingTab}
+            onClick={() => { setActiveSettingGroup(title); setForm(null); setSelectedId(null); }}>
+            {title.split(' — ')[0]}
+          </button>)}
+        </nav>
+        <div className={styles.defaults}>{settingGroups.filter(([title]) => title === activeSettingGroup).map(([title, prefix]) => <section className={styles.settingGroup} key={title}>
           <h3>{title}</h3>
           {settingDefaults.filter(([key]) => prefix ? key.startsWith(prefix) : !key.startsWith('profile_card.') && !key.startsWith('lanyard.') && !key.startsWith('scroll_expand.')).map(([key, value]) => {
             const row = data.site_settings.find((item) => item.setting_key === key);

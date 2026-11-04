@@ -46,12 +46,19 @@ export async function getPublicPortfolioData() {
       projects: (projects.data ?? []).map((item) => ({
         ...item,
         cover_url: publicImageUrl(supabase, item.cover_path),
+        preview_urls: (Array.isArray(item.preview_paths) ? item.preview_paths : [])
+          .map((path) => publicImageUrl(supabase, path)).filter(Boolean),
         technologies: projectTechnologyNames.get(item.id) ?? []
       })),
       technologies: technologies.data ?? [],
       skills: skills.data ?? [],
       experiences: (experiences.data ?? []).map((item) => ({ ...item, logo_url: publicImageUrl(supabase, item.logo_path) })),
-      history: (history.data ?? []).map((item) => ({ ...item, image_url: publicImageUrl(supabase, item.image_path) })),
+      history: (history.data ?? []).map((item) => ({
+        ...item,
+        image_url: publicImageUrl(supabase, item.image_path),
+        preview_urls: (Array.isArray(item.preview_paths) ? item.preview_paths : [])
+          .map((path) => publicImageUrl(supabase, path)).filter(Boolean)
+      })),
       social: social.data ?? [],
       settings: Object.fromEntries((settings.data ?? []).map(({ setting_key, setting_value }) => [
         setting_key,
