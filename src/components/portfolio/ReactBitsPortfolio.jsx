@@ -336,7 +336,7 @@ export function ProjectCardSwap({ projects = [] }) {
     {(mod) => {
       const CardSwap = mod.default;
       const Card = mod.Card;
-      const visibleProjects = projects.slice(0, 8);
+      const visibleProjects = projects;
       const cardHeight = smallScreen ? Math.max(270, Math.round(cardWidth * 0.98)) : 360;
       return <CardSwap delay={4500} cardDistance={smallScreen ? 28 : 52} verticalDistance={smallScreen ? 30 : 52} depth={90} skewAmount={5}
         visibleCards={Math.min(smallScreen ? 3 : 4, Math.max(1, visibleProjects.length))} cardRadius={18} speed={1} bounce={0.35} parallax={0.65} hoverSpread={0.12}

@@ -140,7 +140,7 @@ export default async function HomePage() {
 
       <section className="page-shell section certificates-section" id="certificates" aria-labelledby="certificates-title">
         <SectionHeading number="06" title="Sertifikat" id="certificates-title" description="Sertifikat dan kredensial yang sudah diterbitkan."></SectionHeading>
-        <div className="history-line">{certificates.length ? certificates.map((item) => <article className="managed-entry" key={item.id}><span className="history-marker" aria-hidden="true" /><span className="entry-index">{new Date(`${item.event_date}T00:00:00`).getFullYear()}</span><div><h3>{item.title}</h3><p>{item.category}</p><small>{item.description}</small><CertificatePreview item={item} /></div></article>) : <p>Tambahkan sertifikat melalui Admin → Sertifikat agar muncul di sini.</p>}</div>
+        {certificates.length ? <CertificatePreview items={certificates} /> : <p>Tambahkan sertifikat melalui Admin → Sertifikat agar muncul di sini.</p>}
       </section>
 
       <section className="page-shell section contact-section" id="contact" aria-labelledby="contact-title">

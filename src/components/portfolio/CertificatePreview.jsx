@@ -111,57 +111,60 @@ function RefineFrame({ src, alt, aspectRatio = '4 / 3' }) {
   </div>;
 }
 
-export default function CertificatePreview({ item }) {
-  const dialogRef = useRef(null);
+export default function CertificatePreview({ items = [] }) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const images = [
-    ...(item.image_url ? [{ src: item.image_url, label: 'Certificate' }] : []),
-    ...(item.preview_urls ?? []).map((src, index) => ({ src, label: `Certificate detail ${index + 1}` })),
-  ];
+  const touchStart = useRef(null);
+  const images = items.flatMap((entry) => [
+    ...(entry.image_url ? [{ src: entry.image_url, label: entry.title, entry }] : []),
+    ...(entry.preview_urls ?? []).map((src, index) => ({
+      src,
+      label: `${entry.title} — detail ${index + 1}`,
+      entry,
+    })),
+  ]);
+  const displayIndex = images.length ? activeIndex % images.length : 0;
 
   useEffect(() => {
-    if (images.length && activeIndex >= images.length) setActiveIndex(0);
-  }, [activeIndex, images.length]);
-
-  function openPreview() {
-    setActiveIndex(0);
-    dialogRef.current?.showModal();
-  }
+    if (images.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+    const timer = window.setInterval(() => setActiveIndex((index) => (index + 1) % images.length), 3200);
+    return () => window.clearInterval(timer);
+  }, [images.length]);
 
   function move(step) {
     setActiveIndex((index) => (index + step + images.length) % images.length);
   }
 
-  return <>
-    {item.image_url ? <button className="certificate-preview-trigger" type="button" onClick={openPreview}
-      aria-label={`Preview certificate: ${item.title}`}>
-      <img className="history-image" src={item.image_url} alt={`${item.title} certificate`} loading="lazy" />
-      <span>View certificate preview ↗</span>
-    </button> : <span className="certificate-preview-missing">Certificate preview has not been added yet.</span>}
-    {images.length > 0 && <dialog ref={dialogRef} className="certificate-preview-dialog"
-      aria-label={`${item.title} certificate preview`}
-      onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close(); }}>
-      <div className="certificate-preview-content">
-        <button className="certificate-preview-close" type="button" aria-label="Close certificate preview"
-          onClick={() => dialogRef.current?.close()}>×</button>
-        <p className="certificate-preview-kicker">CERTIFICATE PREVIEW</p>
-        <h3>{item.title}</h3>
-        <RefineFrame key={images[activeIndex].src} src={images[activeIndex].src}
-          alt={`${item.title} — ${images[activeIndex].label}`} />
-        {images.length > 1 && <>
-          <div className="certificate-preview-controls">
-            <button type="button" className="certificate-preview-arrow" aria-label="Previous certificate image" onClick={() => move(-1)}>←</button>
-            <span aria-live="polite">{activeIndex + 1} / {images.length}</span>
-            <button type="button" className="certificate-preview-arrow" aria-label="Next certificate image" onClick={() => move(1)}>→</button>
-          </div>
-          <div className="certificate-preview-dots" role="group" aria-label="Choose certificate image">
-            {images.map((image, index) => <button type="button" key={`${image.src}-${index}`}
-              className="certificate-preview-dot" data-active={index === activeIndex}
-              aria-label={`Show ${image.label.toLowerCase()}`} aria-pressed={index === activeIndex}
-              onClick={() => setActiveIndex(index)} />)}
-          </div>
-        </>}
-      </div>
-    </dialog>}
-  </>;
+  if (!images.length) return <p className="certificate-preview-missing">Tambahkan gambar sertifikat untuk menampilkan preview.</p>;
+
+  return <div className="certificate-showcase" role="region" aria-label="Certificate previews"
+    onWheel={(event) => { if (Math.abs(event.deltaY) > 8) move(event.deltaY > 0 ? 1 : -1); }}
+    onTouchStart={(event) => { touchStart.current = event.touches[0]?.clientY ?? null; }}
+    onTouchEnd={(event) => {
+      const end = event.changedTouches[0]?.clientY;
+      if (touchStart.current !== null && end !== undefined && Math.abs(end - touchStart.current) > 35) move(end < touchStart.current ? 1 : -1);
+      touchStart.current = null;
+    }}>
+    <p className="certificate-preview-kicker">SERTIFIKAT / {String(displayIndex + 1).padStart(2, '0')}</p>
+    <h3 aria-live="polite">{images[displayIndex]?.label}</h3>
+    <div className="certificate-vertical-stage">
+      {[-1, 0, 1].map((offset) => {
+        const index = (displayIndex + offset + images.length) % images.length;
+        const image = images[index];
+        return <div className={`certificate-vertical-card${offset === 0 ? ' is-active' : ` is-neighbor neighbor-${offset < 0 ? 'top' : 'bottom'}`}`}
+          key={offset} aria-hidden={offset !== 0}>
+          {offset === 0 ? <RefineFrame key={image.src} src={image.src} alt={`${image.label} certificate`} aspectRatio="16 / 10" />
+            : <img src={image.src} alt="" loading="lazy" />}
+        </div>;
+      })}
+    </div>
+    <div className="certificate-showcase-meta" aria-live="polite">
+      {images[displayIndex]?.entry?.event_date && <span>{images[displayIndex].entry.event_date.slice(0, 4)}</span>}
+      {images[displayIndex]?.entry?.description && <p>{images[displayIndex].entry.description}</p>}
+    </div>
+    {images.length > 1 && <div className="certificate-preview-controls">
+      <button type="button" className="certificate-preview-arrow" aria-label="Previous certificate" onClick={() => move(-1)}>↑</button>
+      <span>{displayIndex + 1} / {images.length} · scroll atau geser</span>
+      <button type="button" className="certificate-preview-arrow" aria-label="Next certificate" onClick={() => move(1)}>↓</button>
+    </div>}
+  </div>;
 }

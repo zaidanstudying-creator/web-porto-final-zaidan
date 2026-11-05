@@ -1,64 +1,75 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { logoutAdmin } from '../actions';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import styles from './admin-dashboard.module.css';
 
 const nav = [
-  ['overview', 'Overview'], ['profiles', 'Profile'], ['projects', 'Projects'],
-  ['technologies', 'Technologies'], ['skills', 'Skills'], ['experiences', 'Experience'],
-  ['history_entries', 'History'], ['certificates', 'Sertifikat'], ['social_links', 'Social links'], ['site_settings', 'Section editor'],
-  ['contact_messages', 'Inbox'], ['media_assets', 'Media']
+  ['overview', 'Dashboard'], ['profiles', 'Profil'], ['projects', 'Proyek'],
+  ['technologies', 'Teknologi'], ['skills', 'Keahlian'], ['experiences', 'Pengalaman'],
+  ['history_entries', 'Riwayat'], ['certificates', 'Sertifikat'], ['social_links', 'Tautan sosial'], ['site_settings', 'Pengaturan tampilan'],
+  ['contact_messages', 'Pesan masuk'], ['media_assets', 'Media']
 ];
+
+const sectionHelp = {
+  profiles: 'Kelola informasi profil untuk bagian pembuka dan kartu profil. Pengaturan nama atau tampilan khusus ada di Pengaturan tampilan. Foto profil dan pola ikon memiliki fungsi berbeda.',
+  projects: 'Hanya proyek berstatus Tayang muncul di situs. Proyek Unggulan tampil lebih dulu, lalu mengikuti Urutan tampil.',
+  technologies: 'Nama teknologi tampil di daftar dan pilihan teknologi untuk proyek. Item tersembunyi tidak ditampilkan.',
+  skills: 'Nama keahlian tampil bersama teknologi pada bagian Skills. Item tersembunyi tidak ditampilkan.',
+  experiences: 'Pengalaman berstatus Tayang muncul di situs. Tandai posisi yang masih berjalan untuk menampilkan “Present”.',
+  history_entries: 'Riwayat berstatus Tayang muncul di timeline. Tanggal, kategori, deskripsi, dan gambar melengkapi tiap peristiwa.',
+  certificates: 'Sertifikat berstatus Tayang tampil di carousel. Gambar utama dan tambahan menjadi slide; judul, tahun, dan deskripsi ikut ditampilkan.',
+  social_links: 'Tautan yang terlihat muncul di navigasi dan bagian kontak. Gunakan URL lengkap, misalnya https://…',
+  site_settings: 'Pengaturan di sini langsung mengubah komponen visual yang disebutkan pada nama pengaturan.',
+  media_assets: 'Pilih media ini saat mengedit gambar. Jangan hapus file yang masih dipakai oleh konten.'
+};
 
 const fields = {
   profiles: [
-    ['full_name', 'Full name', 'text', true], ['professional_title', 'Professional title', 'text', true],
-    ['headline', 'Headline', 'text'], ['bio', 'Biography', 'textarea'], ['location', 'Location', 'text'],
-    ['availability_status', 'Availability', 'text'], ['handle', 'Handle', 'text'],
-    ['avatar_path', 'Profile / lanyard card photo', 'image'], ['profile_icon_path', 'Profile card image', 'image']
+    ['full_name', 'Nama lengkap', 'text', true], ['professional_title', 'Jabatan profesional', 'text', true],
+    ['headline', 'Kalimat pembuka', 'text'], ['bio', 'Tentang saya', 'textarea'], ['location', 'Lokasi', 'text'],
+    ['availability_status', 'Status ketersediaan', 'text'],
+    ['avatar_path', 'Foto profil', 'image'], ['profile_icon_path', 'Pola ikon kartu profil', 'image']
   ],
   projects: [
-    ['title', 'Project title', 'text', true], ['slug', 'URL slug', 'text', true],
-    ['subtitle', 'Subtitle', 'text'], ['summary', 'Short summary', 'textarea'], ['description', 'Description', 'textarea'],
-    ['cover_path', 'Cover image', 'image'], ['preview_paths', 'Project preview images', 'images'],
-    ['github_url', 'GitHub URL', 'url'], ['demo_url', 'Live demo URL', 'url'],
-    ['technology_ids', 'Technologies used', 'multi'],
-    ['sort_order', 'Display order', 'number'], ['featured', 'Featured project', 'boolean'], ['is_published', 'Published', 'boolean']
+    ['title', 'Nama proyek', 'text', true], ['slug', 'Slug URL', 'text', true],
+    ['subtitle', 'Subjudul', 'text'], ['summary', 'Ringkasan', 'textarea'], ['description', 'Deskripsi lengkap', 'textarea'],
+    ['cover_path', 'Gambar sampul', 'image'], ['preview_paths', 'Screenshot tambahan', 'images'],
+    ['github_url', 'URL GitHub', 'url'], ['demo_url', 'URL demo langsung', 'url'],
+    ['technology_ids', 'Teknologi yang digunakan', 'multi'],
+    ['sort_order', 'Urutan tampil', 'number'], ['featured', 'Proyek unggulan', 'boolean'], ['is_published', 'Tayang di website', 'boolean']
   ],
   technologies: [
-    ['name', 'Technology', 'text', true], ['category', 'Category', 'text'], ['sort_order', 'Display order', 'number'], ['is_visible', 'Visible on site', 'boolean']
+    ['name', 'Nama teknologi', 'text', true], ['sort_order', 'Urutan tampil', 'number'], ['is_visible', 'Tampilkan di website', 'boolean']
   ],
   skills: [
-    ['name', 'Skill', 'text', true], ['category', 'Category', 'text'], ['icon', 'Icon name', 'text'],
-    ['description', 'Description', 'textarea'], ['sort_order', 'Display order', 'number'], ['is_visible', 'Visible on site', 'boolean']
+    ['name', 'Nama keahlian', 'text', true], ['sort_order', 'Urutan tampil', 'number'], ['is_visible', 'Tampilkan di website', 'boolean']
   ],
   experiences: [
-    ['organization', 'Organization', 'text', true], ['position', 'Position', 'text', true],
-    ['start_date', 'Start date', 'date'], ['end_date', 'End date', 'date'], ['is_current', 'Current role', 'boolean'],
-    ['description', 'Description', 'textarea'], ['logo_path', 'Logo image', 'image'],
-    ['sort_order', 'Display order', 'number'], ['is_published', 'Published', 'boolean']
+    ['organization', 'Organisasi', 'text', true], ['position', 'Jabatan', 'text', true],
+    ['start_date', 'Tanggal mulai', 'date'], ['end_date', 'Tanggal selesai', 'date'], ['is_current', 'Masih bekerja di sini', 'boolean'],
+    ['description', 'Deskripsi', 'textarea'], ['logo_path', 'Logo organisasi', 'image'],
+    ['sort_order', 'Urutan tampil', 'number'], ['is_published', 'Tayang di website', 'boolean']
   ],
   history_entries: [
-    ['title', 'Milestone', 'text', true], ['event_date', 'Date', 'date', true], ['category', 'Category', 'text'],
-    ['description', 'Description', 'textarea'], ['image_path', 'Milestone image', 'image'],
-    ['preview_paths', 'Additional certificate preview images', 'images'],
-    ['sort_order', 'Display order', 'number'], ['is_published', 'Published', 'boolean']
+    ['title', 'Nama peristiwa', 'text', true], ['event_date', 'Tanggal', 'date', true], ['category', 'Kategori', 'text'],
+    ['description', 'Deskripsi', 'textarea'], ['image_path', 'Gambar peristiwa', 'image'],
+    ['sort_order', 'Urutan tampil', 'number'], ['is_published', 'Tayang di website', 'boolean']
   ],
   certificates: [
-    ['title', 'Certificate title', 'text', true], ['event_date', 'Issue date', 'date', true],
-    ['description', 'Description', 'textarea'], ['image_path', 'Certificate cover image', 'image'],
-    ['preview_paths', 'Additional certificate preview images', 'images'],
-    ['sort_order', 'Display order', 'number'], ['is_published', 'Published', 'boolean']
+    ['title', 'Nama sertifikat', 'text', true], ['event_date', 'Tanggal terbit', 'date', true],
+    ['description', 'Deskripsi', 'textarea'], ['image_path', 'Gambar utama sertifikat', 'image'],
+    ['preview_paths', 'Gambar tambahan sertifikat', 'images'],
+    ['sort_order', 'Urutan tampil', 'number'], ['is_published', 'Tayang di website', 'boolean']
   ],
   social_links: [
-    ['platform', 'Platform', 'text', true], ['label', 'Link label', 'text'], ['url', 'URL', 'url', true],
-    ['sort_order', 'Display order', 'number'], ['is_visible', 'Visible on site', 'boolean']
+    ['platform', 'Platform', 'text', true], ['label', 'Nama tautan', 'text'], ['url', 'URL lengkap', 'url', true],
+    ['sort_order', 'Urutan tampil', 'number'], ['is_visible', 'Tampilkan di website', 'boolean']
   ],
   site_settings: [
-    ['setting_key', 'Setting key', 'text', true], ['setting_value', 'Value (JSON)', 'json', true]
+    ['setting_key', 'Kunci pengaturan', 'text', true], ['setting_value', 'Nilai (JSON)', 'json', true]
   ]
 };
 
@@ -140,45 +151,55 @@ const choiceSettingOptions = {
   'lanyard.anchor': ['left', 'center', 'right'], 'lanyard.metal': ['graphite', 'silver', 'gold']
 };
 const settingLabels = {
-  'hero.text': 'Hero — name text', 'hero.tech_loop': 'Hero — technology words',
-  'scroll_velocity.texts': 'Scroll velocity — text rows',
-  'appearance.primary_accent': 'Appearance — primary accent', 'appearance.secondary_accent': 'Appearance — secondary accent',
-  'profile_card.name': 'Profile card — name', 'profile_card.title': 'Profile card — title',
-  'profile_card.status': 'Profile card — status text', 'profile_card.handle': 'Profile card — social handle',
-  'profile_card.icon_pattern': 'Profile card — pattern image', 'profile_card.contact_text': 'Profile card — contact button',
-  'profile_card.status_color': 'Profile card — status color', 'profile_card.theme': 'Profile card — theme',
-  'profile_card.radius': 'Profile card — corner radius', 'profile_card.holo': 'Profile card — holographic intensity',
-  'profile_card.glare': 'Profile card — glare intensity', 'profile_card.enable_tilt': 'Profile card — tilt effect',
-  'profile_card.tilt_strength': 'Profile card — tilt strength', 'profile_card.parallax': 'Profile card — parallax depth',
-  'profile_card.enable_mobile_tilt': 'Profile card — mobile tilt', 'profile_card.mobile_tilt_sensitivity': 'Profile card — mobile tilt sensitivity',
-  'profile_card.intro': 'Profile card — entrance animation', 'profile_card.show_user_info': 'Profile card — show footer',
-  'scroll_expand.title': 'Behind the Code — title', 'scroll_expand.scroll_hint': 'Behind the Code — scroll hint',
-  'scroll_expand.media_path': 'Behind the Code — main image', 'scroll_expand.alt': 'Behind the Code — image description',
-  'scroll_expand.kicker': 'Behind the Code — eyebrow', 'scroll_expand.name': 'Behind the Code — overlay name',
-  'scroll_expand.subtitle': 'Behind the Code — subtitle', 'scroll_expand.description': 'Behind the Code — description',
-  'scroll_expand.start_width': 'Behind the Code — start width (%)', 'scroll_expand.start_height': 'Behind the Code — start height (%)',
-  'scroll_expand.start_radius': 'Behind the Code — start corner radius', 'scroll_expand.end_radius': 'Behind the Code — end corner radius',
-  'scroll_expand.media_zoom': 'Behind the Code — image zoom', 'scroll_expand.scroll_distance': 'Behind the Code — scroll distance',
-  'scroll_expand.hold_distance': 'Behind the Code — hold distance', 'scroll_expand.smoothing': 'Behind the Code — motion smoothing',
-  'scroll_expand.overlay_scrim': 'Behind the Code — overlay darkness',
-  'scroll_expand.use_window_scroll': 'Behind the Code — use page scroll',
-  'lanyard.front_image': 'Lanyard — front artwork', 'lanyard.back_image': 'Lanyard — back image',
-  'lanyard.strap_image': 'Lanyard — strap artwork', 'lanyard.card_color': 'Lanyard — card color',
-  'lanyard.strap_color': 'Lanyard — strap color', 'lanyard.size': 'Lanyard — display size',
-  'lanyard.orientation': 'Lanyard — card orientation', 'lanyard.finish': 'Lanyard — surface finish',
-  'lanyard.image_fit': 'Lanyard — image fit',
-  'lanyard.anchor': 'Lanyard — position', 'lanyard.strap_length': 'Lanyard — strap length',
-  'lanyard.corner_radius': 'Lanyard — card corner radius',
-  'lanyard.strap_width': 'Lanyard — strap width', 'lanyard.metal': 'Lanyard — metal hardware',
-  'lanyard.gravity': 'Lanyard — gravity', 'lanyard.damping': 'Lanyard — motion damping',
-  'lanyard.elasticity': 'Lanyard — elasticity', 'lanyard.breeze': 'Lanyard — breeze',
-  'lanyard.interactive': 'Lanyard — interactive movement', 'lanyard.intro': 'Lanyard — entrance animation'
+  'hero.text': 'Hero — nama utama', 'hero.tech_loop': 'Hero — daftar teknologi',
+  'scroll_velocity.texts': 'Teks berjalan — baris teks',
+  'appearance.primary_accent': 'Tema — warna aksen utama', 'appearance.secondary_accent': 'Tema — warna aksen kedua',
+  'profile_card.name': 'Kartu profil — nama', 'profile_card.title': 'Kartu profil — jabatan',
+  'profile_card.status': 'Kartu profil — status', 'profile_card.handle': 'Kartu profil — nama akun sosial',
+  'profile_card.icon_pattern': 'Kartu profil — pola ikon', 'profile_card.contact_text': 'Kartu profil — teks tombol kontak',
+  'profile_card.status_color': 'Kartu profil — warna status', 'profile_card.theme': 'Kartu profil — tema warna',
+  'profile_card.radius': 'Kartu profil — sudut kartu', 'profile_card.holo': 'Kartu profil — efek hologram',
+  'profile_card.glare': 'Kartu profil — efek cahaya', 'profile_card.enable_tilt': 'Kartu profil — aktifkan kemiringan',
+  'profile_card.tilt_strength': 'Kartu profil — kekuatan kemiringan', 'profile_card.parallax': 'Kartu profil — kedalaman parallax',
+  'profile_card.enable_mobile_tilt': 'Kartu profil — kemiringan di ponsel', 'profile_card.mobile_tilt_sensitivity': 'Kartu profil — sensitivitas ponsel',
+  'profile_card.intro': 'Kartu profil — animasi pembuka', 'profile_card.show_user_info': 'Kartu profil — tampilkan info bawah',
+  'scroll_expand.title': 'Behind the Code — judul', 'scroll_expand.scroll_hint': 'Behind the Code — petunjuk scroll',
+  'scroll_expand.media_path': 'Behind the Code — gambar utama', 'scroll_expand.alt': 'Behind the Code — deskripsi gambar',
+  'scroll_expand.kicker': 'Behind the Code — teks kecil', 'scroll_expand.name': 'Behind the Code — nama',
+  'scroll_expand.subtitle': 'Behind the Code — subjudul', 'scroll_expand.description': 'Behind the Code — deskripsi',
+  'scroll_expand.start_width': 'Behind the Code — lebar awal (%)', 'scroll_expand.start_height': 'Behind the Code — tinggi awal (%)',
+  'scroll_expand.start_radius': 'Behind the Code — sudut awal', 'scroll_expand.end_radius': 'Behind the Code — sudut akhir',
+  'scroll_expand.media_zoom': 'Behind the Code — pembesaran gambar', 'scroll_expand.scroll_distance': 'Behind the Code — jarak scroll',
+  'scroll_expand.hold_distance': 'Behind the Code — jeda scroll', 'scroll_expand.smoothing': 'Behind the Code — kehalusan gerakan',
+  'scroll_expand.overlay_scrim': 'Behind the Code — kegelapan lapisan',
+  'scroll_expand.use_window_scroll': 'Behind the Code — gunakan scroll halaman',
+  'lanyard.front_image': 'Lanyard — gambar depan', 'lanyard.back_image': 'Lanyard — gambar belakang',
+  'lanyard.strap_image': 'Lanyard — gambar tali', 'lanyard.card_color': 'Lanyard — warna kartu',
+  'lanyard.strap_color': 'Lanyard — warna tali', 'lanyard.size': 'Lanyard — ukuran tampilan',
+  'lanyard.orientation': 'Lanyard — orientasi kartu', 'lanyard.finish': 'Lanyard — jenis permukaan',
+  'lanyard.image_fit': 'Lanyard — penyesuaian gambar',
+  'lanyard.anchor': 'Lanyard — posisi', 'lanyard.strap_length': 'Lanyard — panjang tali',
+  'lanyard.corner_radius': 'Lanyard — sudut kartu',
+  'lanyard.strap_width': 'Lanyard — lebar tali', 'lanyard.metal': 'Lanyard — warna logam',
+  'lanyard.gravity': 'Lanyard — gravitasi', 'lanyard.damping': 'Lanyard — redaman gerak',
+  'lanyard.elasticity': 'Lanyard — elastisitas', 'lanyard.breeze': 'Lanyard — hembusan angin',
+  'lanyard.interactive': 'Lanyard — gerakan interaktif', 'lanyard.intro': 'Lanyard — animasi pembuka',
+  'glow_cursor.color': 'Kursor kontak — warna efek', 'glow_cursor.intensity': 'Kursor kontak — intensitas efek',
+  'components.pill_nav.enabled': 'Navigasi — tampilkan menu desktop',
+  'components.tech_text.enabled': 'Hero — aktifkan efek teks',
+  'components.text_loop.enabled': 'Hero — aktifkan teks berjalan',
+  'components.scroll_velocity.enabled': 'Teks berjalan — tampilkan bagian ini',
+  'components.profile_card.enabled': 'Kartu profil — tampilkan di website',
+  'components.lanyard.enabled': 'Lanyard — tampilkan di website',
+  'components.card_swap.enabled': 'Proyek — aktifkan tumpukan kartu',
+  'components.scroll_expand.enabled': 'Behind the Code — tampilkan bagian ini',
+  'components.glow_cursor.enabled': 'Kontak — aktifkan efek kursor'
 };
 const settingGroups = [
-  ['Profile card — photo, name, status and effects', 'profile_card.'],
-  ['Lanyard — front, back, strap and motion', 'lanyard.'],
-  ['Behind the Code — artwork, copy and scroll animation', 'scroll_expand.'],
-  ['Hero, navigation and visual theme', null]
+  ['Kartu profil — foto, nama, status, efek', 'profile_card.'],
+  ['Lanyard — gambar, tali, gerakan', 'lanyard.'],
+  ['Behind the Code — gambar, teks, animasi', 'scroll_expand.'],
+  ['Hero, navigasi, dan tema', null]
 ];
 
 function blankRecord(section) {
@@ -197,9 +218,37 @@ function recordName(section, row) {
   return row[titleField[section] || (section === 'certificates' ? 'title' : '')] || 'Untitled';
 }
 
+function recordMeta(section, row) {
+  if (section === 'contact_messages') {
+    const status = { unread: 'Belum dibaca', read: 'Sudah dibaca', archived: 'Diarsipkan' }[row.status] || row.status;
+    return `${row.name} · ${status}`;
+  }
+  if (section === 'media_assets') return row.object_path;
+  if (section === 'projects') return `${row.featured ? 'Unggulan · ' : ''}${row.is_published ? 'Tayang' : 'Draf'}`;
+  if (['experiences', 'history_entries', 'certificates'].includes(section)) {
+    return `${row.category ? `${row.category} · ` : ''}${row.is_published ? 'Tayang' : 'Draf'}`;
+  }
+  if (['technologies', 'skills', 'social_links'].includes(section)) return row.is_visible ? 'Tampil di website' : 'Disembunyikan';
+  return row.category || '';
+}
+
+function mediaReferences(asset, data) {
+  if (asset.bucket_id !== 'portfolio-public') return [];
+  const path = asset.object_path;
+  const references = [];
+  if (data.profiles.some((row) => row.avatar_path === path)) references.push('foto profil');
+  if (data.profiles.some((row) => row.profile_icon_path === path)) references.push('pola ikon profil');
+  if (data.projects.some((row) => row.cover_path === path || row.preview_paths?.includes(path))) references.push('proyek');
+  if (data.experiences.some((row) => row.logo_path === path)) references.push('pengalaman');
+  if (data.history_entries.some((row) => row.image_path === path || row.preview_paths?.includes(path))) references.push('riwayat atau sertifikat');
+  if (data.site_settings.some((row) => row.setting_value === path)) references.push('pengaturan tampilan');
+  return references;
+}
+
 function sortedRows(section, rows) {
   return [...(rows ?? [])].sort((a, b) => {
     if (section === 'contact_messages' || section === 'media_assets') return new Date(b.created_at) - new Date(a.created_at);
+    if (section === 'projects' && a.featured !== b.featured) return Number(b.featured) - Number(a.featured);
     return (a.sort_order ?? 0) - (b.sort_order ?? 0);
   });
 }
@@ -210,6 +259,7 @@ export default function AdminDashboard({ initialData, initialError }) {
   const [section, setSection] = useState('overview');
   const [selectedId, setSelectedId] = useState(null);
   const [form, setForm] = useState(null);
+  const [savedForm, setSavedForm] = useState(null);
   const [search, setSearch] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState(null);
@@ -221,32 +271,55 @@ export default function AdminDashboard({ initialData, initialError }) {
     const query = search.trim().toLowerCase();
     return query ? rows.filter((row) => `${recordName(section, row)} ${row.category ?? ''}`.toLowerCase().includes(query)) : rows;
   }, [rows, search, section]);
-  const pageTitle = nav.find(([id]) => id === section)?.[1] ?? 'Overview';
+  const pageTitle = nav.find(([id]) => id === section)?.[1] ?? 'Dashboard';
+  const isDirty = Boolean(form && JSON.stringify(form) !== savedForm);
+
+  useEffect(() => {
+    if (!isDirty) return undefined;
+    const warnBeforeLeave = (event) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warnBeforeLeave);
+    return () => window.removeEventListener('beforeunload', warnBeforeLeave);
+  }, [isDirty]);
+
+  function confirmDiscardChanges() {
+    return !isDirty || window.confirm('Perubahan belum disimpan. Buang perubahan ini?');
+  }
 
   function openSection(id) {
+    if (!confirmDiscardChanges()) return;
     setSection(id);
     setSelectedId(null);
     setForm(null);
+    setSavedForm(null);
     setSearch('');
     setNotice(null);
   }
 
   function editRow(row) {
+    if (!confirmDiscardChanges()) return;
     setSelectedId(row.id);
-    setForm({ ...row,
+    const nextForm = { ...row,
       ...(section === 'projects' ? {
         technology_ids: data.project_technologies.filter((item) => item.project_id === row.id).map((item) => item.technology_id),
         preview_paths: Array.isArray(row.preview_paths) ? row.preview_paths : []
       } : {}),
       ...(section === 'certificates' ? { preview_paths: Array.isArray(row.preview_paths) ? row.preview_paths : [] } : {}),
       ...(section === 'site_settings' ? { setting_value: JSON.stringify(row.setting_value, null, 2) } : {})
-    });
+    };
+    setForm(nextForm);
+    setSavedForm(JSON.stringify(nextForm));
     setNotice(null);
   }
 
   function addRow() {
+    if (!confirmDiscardChanges()) return;
     setSelectedId(null);
-    setForm(blankRecord(section));
+    const nextForm = blankRecord(section);
+    setForm(nextForm);
+    setSavedForm(JSON.stringify(nextForm));
     setNotice(null);
   }
 
@@ -277,6 +350,7 @@ export default function AdminDashboard({ initialData, initialError }) {
       payload[name] = value;
     }
     if (section === 'profiles') payload.is_primary = true;
+    if (section === 'experiences' && payload.is_current) payload.end_date = null;
     if (section === 'certificates') payload.category = 'Sertifikat';
     const request = selectedId
       ? supabase.from(table).update(payload).eq('id', selectedId)
@@ -306,11 +380,13 @@ export default function AdminDashboard({ initialData, initialError }) {
       ? current[table].map((item) => item.id === selectedId ? saved : item)
       : [...current[table], saved] }));
     setSelectedId(saved.id);
-    setForm({ ...saved,
+    const nextForm = { ...saved,
       ...(section === 'projects' ? { technology_ids: selectedTechnologyIds } : {}),
       ...(section === 'site_settings' ? { setting_value: JSON.stringify(saved.setting_value, null, 2) } : {})
-    });
-    setNotice({ kind: 'success', text: 'Perubahan tersimpan.' });
+    };
+    setForm(nextForm);
+    setSavedForm(JSON.stringify(nextForm));
+    setNotice({ kind: 'success', text: 'Perubahan tersimpan. Buka atau muat ulang website untuk melihat hasilnya.' });
   }
 
   async function deleteRow(row) {
@@ -322,7 +398,7 @@ export default function AdminDashboard({ initialData, initialError }) {
     setBusy(false);
     if (error) { setNotice({ kind: 'error', text: error.message }); return; }
     setData((current) => ({ ...current, [table]: current[table].filter((item) => item.id !== row.id) }));
-    if (selectedId === row.id) { setSelectedId(null); setForm(null); }
+    if (selectedId === row.id) { setSelectedId(null); setForm(null); setSavedForm(null); }
     setNotice({ kind: 'success', text: 'Konten dihapus.' });
   }
 
@@ -449,6 +525,7 @@ export default function AdminDashboard({ initialData, initialError }) {
   }
 
   async function createDefaultSetting([key, value]) {
+    if (!confirmDiscardChanges()) return;
     const exists = data.site_settings.some((row) => row.setting_key === key);
     if (exists) return;
     setBusy(true);
@@ -456,6 +533,10 @@ export default function AdminDashboard({ initialData, initialError }) {
     setBusy(false);
     if (error) { setNotice({ kind: 'error', text: error.message }); return; }
     setData((current) => ({ ...current, site_settings: [...current.site_settings, saved] }));
+    const nextForm = { ...saved, setting_value: JSON.stringify(saved.setting_value, null, 2) };
+    setSelectedId(saved.id);
+    setForm(nextForm);
+    setSavedForm(JSON.stringify(nextForm));
     setNotice({ kind: 'success', text: `Pengaturan ${key} ditambahkan.` });
   }
 
@@ -480,11 +561,11 @@ export default function AdminDashboard({ initialData, initialError }) {
               const path = event.target.value;
               if (path && !imagePaths.includes(path)) changeField(name, [...imagePaths, path]);
             }}>
-            <option value="">Add from Media library…</option>
+            <option value="">Pilih dari Media…</option>
             {libraryImages.filter((asset) => !imagePaths.includes(asset.object_path)).map((asset) => <option key={asset.id} value={asset.object_path}>{asset.original_name}</option>)}
           </select>
           <label className={`${styles.imageUploadButton} ${busy ? styles.imageUploadDisabled : ''}`}>
-            <span>{busy ? 'Uploading…' : 'Upload preview images'}</span>
+            <span>{busy ? 'Mengunggah…' : 'Unggah gambar tambahan'}</span>
             <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple disabled={busy}
               onChange={(event) => {
                 const files = Array.from(event.target.files ?? []);
@@ -496,7 +577,7 @@ export default function AdminDashboard({ initialData, initialError }) {
         {imagePaths.length ? <div className={styles.imagePreviewGrid}>{imagePaths.map((path, index) => <figure className={styles.imagePreviewItem} key={`${path}-${index}`}>
           <img src={imageUrl(path)} alt={`${label} ${index + 1}`} />
           <figcaption><code>{path}</code><button type="button" disabled={busy} onClick={() => changeField(name, imagePaths.filter((_, itemIndex) => itemIndex !== index))}>Remove</button></figcaption>
-        </figure>)}</div> : <small className={styles.fieldHint}>{section === 'history_entries' ? 'Unggah sisi belakang atau foto detail sertifikat agar tersedia di carousel preview.' : 'Unggah screenshot tambahan agar tampil di carousel detail project.'}</small>}
+        </figure>)}</div> : <small className={styles.fieldHint}>{section === 'certificates' ? 'Gambar tambahan akan tampil sebagai slide setelah gambar utama sertifikat.' : 'Unggah screenshot tambahan agar tampil di carousel detail project.'}</small>}
       </div>;
     }
     if (type === 'image' || isImageSetting) {
@@ -516,11 +597,11 @@ export default function AdminDashboard({ initialData, initialError }) {
         <div className={styles.imageTools}>
           <select aria-label={`Choose ${label} from uploaded images`} defaultValue="" disabled={busy}
             onChange={(event) => { if (event.target.value) applyPath(event.target.value); event.target.value = ''; }}>
-            <option value="">Choose from Media library…</option>
+            <option value="">Pilih dari Media…</option>
             {libraryImages.map((asset) => <option key={asset.id} value={asset.object_path}>{asset.original_name}</option>)}
           </select>
           <label className={`${styles.imageUploadButton} ${busy ? styles.imageUploadDisabled : ''}`}>
-            <span>{busy ? 'Uploading…' : 'Upload image'}</span>
+            <span>{busy ? 'Mengunggah…' : 'Unggah gambar'}</span>
             <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" disabled={busy}
               onChange={(event) => {
                 const file = event.target.files?.[0];
@@ -573,7 +654,11 @@ export default function AdminDashboard({ initialData, initialError }) {
       </label>)}</div> : <small>Add technologies first to connect them to a project.</small>}
     </fieldset>;
     if (type === 'boolean') return <label className={styles.toggleField} key={name}>
-      <input id={`${section}-${name}`} name={name} type="checkbox" checked={Boolean(value)} onChange={(event) => changeField(name, event.target.checked)} />
+      <input id={`${section}-${name}`} name={name} type="checkbox" checked={Boolean(value)} onChange={(event) => {
+        const checked = event.target.checked;
+        changeField(name, checked);
+        if (section === 'experiences' && name === 'is_current' && checked) changeField('end_date', '');
+      }} />
       <span>{label}{required && <b aria-hidden="true"> *</b>}</span>
       </label>;
     if (type === 'textarea' || type === 'json') return <label className={`${styles.field} ${styles.wide}`} key={name}>
@@ -581,7 +666,8 @@ export default function AdminDashboard({ initialData, initialError }) {
       {type === 'json' && <small>String, angka, boolean, atau array JSON sesuai jenis pengaturan.</small>}
     </label>;
     return <label className={styles.field} key={name}>
-      <span>{label}{required && <b aria-hidden="true"> *</b>}</span><input id={`${section}-${name}`} name={name} type={type} required={required} value={value ?? ''} onChange={(event) => changeField(name, event.target.value)} />
+      <span>{label}{required && <b aria-hidden="true"> *</b>}</span><input id={`${section}-${name}`} name={name} type={type} required={required} readOnly={section === 'site_settings' && name === 'setting_key' && Boolean(selectedId)} disabled={section === 'experiences' && name === 'end_date' && form?.is_current} value={value ?? ''} onChange={(event) => changeField(name, event.target.value)} />
+      {section === 'site_settings' && name === 'setting_key' && selectedId && <small>Kunci ini sudah terhubung ke komponen website dan tidak dapat diubah.</small>}
     </label>;
   }
 
@@ -595,41 +681,47 @@ export default function AdminDashboard({ initialData, initialError }) {
           <span>{label}</span>{id === 'contact_messages' && unreadCount > 0 && <span className={styles.navCount}>{unreadCount}</span>}
         </button>)}
       </nav>
-      <div className={styles.sidebarFoot}><span>Signed in as admin</span><form action={logoutAdmin}><button type="submit">Sign out <span aria-hidden="true">↗</span></button></form></div>
+      <div className={styles.sidebarFoot}><span>Masuk sebagai admin</span><form action={logoutAdmin}><button type="submit">Keluar <span aria-hidden="true">↗</span></button></form></div>
     </aside>
 
     <main className={styles.main}>
-      <header className={styles.topbar}><div><p className={styles.crumb}>PORTFOLIO / CMS</p><h1>{pageTitle}</h1></div><Link href="/" className={styles.viewSite}>View website <span aria-hidden="true">↗</span></Link></header>
-      {initialError && <div className={styles.alert} role="alert"><strong>Database belum siap.</strong> {initialError} Pastikan migrasi portfolio schema sudah diterapkan di Supabase.</div>}
+      <header className={styles.topbar}><div><p className={styles.crumb}>PORTOFOLIO / CMS</p><h1>{pageTitle}</h1></div><Link href="/" target="_blank" rel="noreferrer" className={styles.viewSite}>Lihat website <span aria-hidden="true">↗</span></Link></header>
+      {initialError && <div className={styles.alert} role="alert"><strong>Data belum dapat dimuat.</strong> {initialError} Pastikan konfigurasi dan migrasi Supabase sudah siap.</div>}
       {notice && <p className={notice.kind === 'error' ? styles.errorNotice : styles.successNotice} role={notice.kind === 'error' ? 'alert' : 'status'}>{notice.text}</p>}
 
       {section === 'overview' ? <section className={styles.overview}>
-        <div className={styles.welcome}><p className={styles.crumb}>CONTENT WORKSPACE</p><h2>Manage the portfolio</h2><p>Edit content, organize its order, and publish each entry from one place.</p></div>
+        <div className={styles.welcome}><p className={styles.crumb}>RUANG KONTEN</p><h2>Kelola konten website</h2><p>Ubah informasi, atur urutannya, lalu pilih konten yang ingin ditampilkan di website.</p></div>
         <div className={styles.stats}>
           {[
-            ['Projects', data.projects.length, 'projects'], ['Skills', data.skills.length + data.technologies.length, 'skills'],
-            ['Experience', data.experiences.length, 'experiences'], ['Unread messages', unreadCount, 'contact_messages']
-          ].map(([label, count, target]) => <button key={label} type="button" onClick={() => openSection(target)}><span>{label}</span><strong>{count}</strong><small>Open {label.toLowerCase()} →</small></button>)}
+            ['Proyek tayang', data.projects.filter((item) => item.is_published).length, 'projects'], ['Keahlian tampil', data.skills.filter((item) => item.is_visible).length, 'skills'],
+            ['Pengalaman tayang', data.experiences.filter((item) => item.is_published).length, 'experiences'], ['Pesan belum dibaca', unreadCount, 'contact_messages']
+          ].map(([label, count, target]) => <button key={label} type="button" onClick={() => openSection(target)}><span>{label}</span><strong>{count}</strong><small>Buka {label.toLowerCase()} →</small></button>)}
         </div>
         <div className={styles.overviewGrid}>
-          <section className={styles.overviewBlock}><div className={styles.blockHead}><h2>Content sections</h2><span>{nav.length - 1} areas</span></div>
+          <section className={styles.overviewBlock}><div className={styles.blockHead}><h2>Bagian konten</h2><span>{nav.length - 1} bagian</span></div>
             {nav.slice(1).map(([id, label]) => <button className={styles.overviewRow} type="button" key={id} onClick={() => openSection(id)}><span>{label}</span><strong>{rowsForSection(data, id).length}</strong><span aria-hidden="true">↗</span></button>)}
           </section>
-          <section className={styles.overviewBlock}><div className={styles.blockHead}><h2>Site settings</h2><span>Presentation</span></div>
+          <section className={styles.overviewBlock}><div className={styles.blockHead}><h2>Pengaturan tampilan</h2><span>Komponen website</span></div>
             {settingDefaults.slice(0, 5).map(([key, defaultValue]) => {
               const row = data.site_settings.find((item) => item.setting_key === key);
-              return <button type="button" className={styles.settingRow} key={key} onClick={() => openSection('site_settings')}><span>{key}</span><strong>{row ? String(Array.isArray(row.setting_value) ? row.setting_value.join(' · ') : row.setting_value) : String(defaultValue)}</strong></button>;
+              return <button type="button" className={styles.settingRow} key={key} onClick={() => openSection('site_settings')}><span>{settingLabels[key] || key}</span><strong>{row ? String(Array.isArray(row.setting_value) ? row.setting_value.join(' · ') : row.setting_value) : String(defaultValue)}</strong></button>;
             })}
           </section>
         </div>
       </section> : null}
 
       {section === 'site_settings' && <section className={styles.settingsIntro}>
-        <div><h2>Edit by section</h2><p>Pilih bagian situs, lalu ubah konten atau tampilannya. Setiap bagian disimpan terpisah.</p></div>
+        <div><h2>Atur tampilan per bagian</h2><p>Pilih pengaturan, ubah nilainya, lalu simpan. Pengaturan diterapkan pada komponen website dengan nama yang sama.</p></div>
         <nav className={styles.settingTabs} aria-label="Portfolio sections to edit">
           {settingGroups.map(([title]) => <button type="button" key={title} aria-pressed={activeSettingGroup === title}
             className={activeSettingGroup === title ? styles.settingTabActive : styles.settingTab}
-            onClick={() => { setActiveSettingGroup(title); setForm(null); setSelectedId(null); }}>
+            onClick={() => {
+              if (!confirmDiscardChanges()) return;
+              setActiveSettingGroup(title);
+              setForm(null);
+              setSavedForm(null);
+              setSelectedId(null);
+            }}>
             {title.split(' — ')[0]}
           </button>)}
         </nav>
@@ -638,39 +730,46 @@ export default function AdminDashboard({ initialData, initialError }) {
           {settingDefaults.filter(([key]) => prefix ? key.startsWith(prefix) : !key.startsWith('profile_card.') && !key.startsWith('lanyard.') && !key.startsWith('scroll_expand.')).map(([key, value]) => {
             const row = data.site_settings.find((item) => item.setting_key === key);
             return <div className={styles.defaultRow} key={key}><span>{settingLabels[key] || key}<small>{key}</small></span>{row
-              ? <button type="button" onClick={() => editRow(row)}>Edit value <span aria-hidden="true">↗</span></button>
-              : <button type="button" disabled={busy} onClick={() => createDefaultSetting([key, value])}>Add default <span aria-hidden="true">＋</span></button>}
+              ? <button type="button" onClick={() => editRow(row)}>Ubah nilai <span aria-hidden="true">↗</span></button>
+              : <button type="button" disabled={busy} onClick={() => createDefaultSetting([key, value])}>Tambah pengaturan <span aria-hidden="true">＋</span></button>}
             </div>;
           })}
         </section>)}</div>
       </section>}
 
       {section === 'media_assets' && <section className={styles.mediaUpload}>
-        <div><h2>Upload an image</h2><p>Public portfolio images · JPG, PNG, WebP, or AVIF · maximum 15 MB</p></div>
-        <form onSubmit={uploadMedia}><label className={styles.fileInput}><span>{uploadFile?.name ?? 'Choose image file'}</span><input type="file" accept="image/jpeg,image/png,image/webp,image/avif" onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)} required /></label><button className={styles.primaryButton} type="submit" disabled={busy || !uploadFile}>{busy ? 'Uploading…' : 'Upload image'}</button></form>
+        <div><h2>Unggah gambar</h2><p>Gambar website · JPG, PNG, WebP, atau AVIF · maksimal 15 MB</p></div>
+        <form onSubmit={uploadMedia}><label className={styles.fileInput}><span>{uploadFile?.name ?? 'Pilih file gambar'}</span><input type="file" accept="image/jpeg,image/png,image/webp,image/avif" onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)} required /></label><button className={styles.primaryButton} type="submit" disabled={busy || !uploadFile}>{busy ? 'Mengunggah…' : 'Unggah gambar'}</button></form>
       </section>}
 
       {section !== 'overview' && <div className={styles.workspace}>
         <section className={styles.listPane} aria-label={`${pageTitle} list`}>
-          <div className={styles.listHead}><div><h2>{pageTitle}</h2><span>{rows.length} {rows.length === 1 ? 'entry' : 'entries'}</span></div>{fields[section] && <button className={styles.addButton} type="button" onClick={addRow}>＋ Add</button>}</div>
-          {section !== 'contact_messages' && <label className={styles.search}><span aria-hidden="true">⌕</span><input placeholder={`Search ${pageTitle.toLowerCase()}`} value={search} onChange={(event) => setSearch(event.target.value)} /></label>}
+          <div className={styles.listHead}><div><h2>{pageTitle}</h2><span>{rows.length} konten</span></div>{fields[section] && section !== 'site_settings' && !(section === 'profiles' && data.profiles.length > 0) && <button className={styles.addButton} type="button" onClick={addRow}>＋ Tambah</button>}</div>
+          {sectionHelp[section] && <p className={styles.sectionHelp}>{sectionHelp[section]}</p>}
+          {section !== 'contact_messages' && <label className={styles.search}><span aria-hidden="true">⌕</span><input placeholder={`Cari ${pageTitle.toLowerCase()}`} value={search} onChange={(event) => setSearch(event.target.value)} /></label>}
           <div className={styles.records}>
-            {visibleRows.length === 0 ? <div className={styles.empty}><strong>Nothing here yet</strong><span>{fields[section] ? 'Add the first entry to this section.' : 'New entries will appear here.'}</span></div> : visibleRows.map((row) => <button type="button" key={row.id} onClick={() => editRow(row)} className={selectedId === row.id ? styles.recordActive : styles.record}>
+            {visibleRows.length === 0 ? <div className={styles.empty}><strong>{search ? 'Konten tidak ditemukan' : 'Belum ada konten'}</strong><span>{section === 'site_settings' ? 'Pilih Tambah pengaturan di atas untuk menambahkan kontrol tampilan.' : fields[section] ? 'Pilih Tambah untuk membuat konten pertama.' : 'Konten baru akan muncul di sini.'}</span></div> : visibleRows.map((row) => <button type="button" key={row.id} onClick={() => editRow(row)} className={selectedId === row.id ? styles.recordActive : styles.record}>
               <span className={styles.recordName}>{recordName(section, row)}</span>
-              <span className={styles.recordMeta}>{section === 'contact_messages' ? `${row.name} · ${row.status}` : section === 'media_assets' ? row.object_path : row.category || (row.is_published ? 'Published' : row.is_visible === false ? 'Hidden' : '')}</span>
+              <span className={styles.recordMeta}>{recordMeta(section, row)}</span>
             </button>)}
           </div>
         </section>
 
         <section className={styles.editor} aria-label={`${pageTitle} editor`}>
           {section === 'contact_messages' ? <MessageViewer row={data.contact_messages.find((item) => item.id === selectedId)} onStatus={updateMessage} onDelete={deleteMessage} busy={busy} />
-            : section === 'media_assets' ? <MediaViewer rows={data.media_assets} supabase={supabase} onDelete={deleteMedia} busy={busy} />
+            : section === 'media_assets' ? <MediaViewer rows={data.media_assets} supabase={supabase} getReferences={(asset) => mediaReferences(asset, data)} onDelete={deleteMedia} busy={busy} />
             : form && fields[section] ? <form className={styles.editForm} onSubmit={saveRow}>
-              <div className={styles.editorHead}><div><p className={styles.crumb}>{selectedId ? 'EDIT ENTRY' : 'NEW ENTRY'}</p><h2>{selectedId ? recordName(section, form) : `New ${pageTitle.toLowerCase().replace(/s$/, '')}`}</h2></div>{selectedId && <button type="button" className={styles.deleteButton} disabled={busy} onClick={() => deleteRow(form)}>Delete</button>}</div>
+              <div className={styles.editorHead}><div><p className={styles.crumb}>{selectedId ? 'SEDANG MENGEDIT' : 'KONTEN BARU'}</p><h2>{selectedId ? recordName(section, form) : `Tambah ${pageTitle.toLowerCase()}`}</h2></div>{selectedId && <button type="button" className={styles.deleteButton} disabled={busy} onClick={() => deleteRow(form)}>Hapus</button>}</div>
               <div className={styles.formGrid}>{fields[section].map(renderField)}</div>
+              {form && <p className={isDirty ? styles.dirtyState : styles.savedState}>{isDirty ? 'Ada perubahan yang belum disimpan.' : selectedId ? 'Semua perubahan sudah tersimpan.' : 'Isi konten baru, lalu simpan untuk menampilkannya.'}</p>}
               {notice && <p className={notice.kind === 'error' ? styles.errorNotice : styles.successNotice} role={notice.kind === 'error' ? 'alert' : 'status'}>{notice.text}</p>}
-              <div className={styles.formActions}><button type="submit" className={styles.primaryButton} disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</button><button type="button" className={styles.cancelButton} onClick={() => { setForm(null); setSelectedId(null); }}>Cancel</button></div>
-            </form> : <div className={styles.editorEmpty}><span className={styles.editorRule} /><h2>Select an entry</h2><p>Choose an item from the list to edit, or add a new one.</p></div>}
+              <div className={styles.formActions}><button type="submit" className={styles.primaryButton} disabled={busy || (!selectedId && !isDirty)}>{busy ? 'Menyimpan…' : 'Simpan perubahan'}</button><button type="button" className={styles.cancelButton} onClick={() => {
+                if (!confirmDiscardChanges()) return;
+                setForm(null);
+                setSavedForm(null);
+                setSelectedId(null);
+              }}>Tutup editor</button></div>
+            </form> : <div className={styles.editorEmpty}><span className={styles.editorRule} /><h2>Pilih konten</h2><p>Pilih item di daftar untuk mengedit, atau gunakan Tambah untuk membuat yang baru.</p></div>}
         </section>
       </div>}
     </main>
@@ -678,20 +777,22 @@ export default function AdminDashboard({ initialData, initialError }) {
 }
 
 function MessageViewer({ row, onStatus, onDelete, busy }) {
-  if (!row) return <div className={styles.editorEmpty}><span className={styles.editorRule} /><h2>Contact inbox</h2><p>Select a message to read it and update its status.</p></div>;
+  if (!row) return <div className={styles.editorEmpty}><span className={styles.editorRule} /><h2>Pesan masuk</h2><p>Pilih pesan di daftar untuk membaca dan memperbarui statusnya.</p></div>;
+  const status = { unread: 'BELUM DIBACA', read: 'SUDAH DIBACA', archived: 'DIARSIPKAN' }[row.status] || row.status.toUpperCase();
   return <article className={styles.messageView}>
-    <p className={styles.crumb}>{row.status.toUpperCase()} / {new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Jakarta' }).format(new Date(row.created_at))}</p>
+    <p className={styles.crumb}>{status} / {new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Jakarta' }).format(new Date(row.created_at))}</p>
     <h2>{row.subject}</h2><p className={styles.messageFrom}>{row.name} · <a href={`mailto:${row.email}`}>{row.email}</a></p>
     <p className={styles.messageBody}>{row.message}</p>
-    <div className={styles.messageActions}><button type="button" disabled={busy} onClick={() => onStatus(row, 'read')}>Mark read</button><button type="button" disabled={busy} onClick={() => onStatus(row, 'archived')}>Archive</button><button type="button" disabled={busy} onClick={() => onStatus(row, 'unread')}>Mark unread</button><button type="button" disabled={busy} onClick={() => onDelete(row)}>Delete</button></div>
+    <div className={styles.messageActions}><button type="button" disabled={busy} onClick={() => onStatus(row, 'read')}>Tandai dibaca</button><button type="button" disabled={busy} onClick={() => onStatus(row, 'archived')}>Arsipkan</button><button type="button" disabled={busy} onClick={() => onStatus(row, 'unread')}>Tandai belum dibaca</button><button type="button" disabled={busy} onClick={() => onDelete(row)}>Hapus pesan</button></div>
   </article>;
 }
 
-function MediaViewer({ rows, supabase, onDelete, busy }) {
-  if (!rows.length) return <div className={styles.editorEmpty}><span className={styles.editorRule} /><h2>Media library</h2><p>Uploaded images will appear here. Copy their storage path into a content image field.</p></div>;
+function MediaViewer({ rows, supabase, getReferences, onDelete, busy }) {
+  if (!rows.length) return <div className={styles.editorEmpty}><span className={styles.editorRule} /><h2>Perpustakaan media</h2><p>Gambar yang diunggah akan muncul di sini. Pilih gambar ini dari editor konten yang membutuhkan gambar.</p></div>;
   return <div className={styles.mediaGrid}>{rows.map((row) => <article className={styles.mediaCard} key={row.id}>
-    <div className={styles.mediaPreview}>{row.bucket_id === 'portfolio-public' ? <img src={supabase.storage.from(row.bucket_id).getPublicUrl(row.object_path).data.publicUrl} alt="" /> : <span>PRIVATE FILE</span>}</div>
+    <div className={styles.mediaPreview}>{row.bucket_id === 'portfolio-public' ? <img src={supabase.storage.from(row.bucket_id).getPublicUrl(row.object_path).data.publicUrl} alt="" /> : <span>FILE PRIVAT</span>}</div>
     <strong title={row.original_name}>{row.original_name}</strong><code>{row.object_path}</code><small>{(Number(row.size_bytes) / 1024 / 1024).toFixed(2)} MB · {row.mime_type}</small>
-    <div className={styles.mediaActions}><button type="button" onClick={() => navigator.clipboard.writeText(row.object_path)}>Copy path</button><button type="button" disabled={busy} onClick={() => onDelete(row)}>Delete</button></div>
+    {getReferences(row).length > 0 && <small className={styles.mediaUsage}>Dipakai oleh: {getReferences(row).join(', ')}. Hapus konten yang memakai gambar ini sebelum menghapus file.</small>}
+    <div className={styles.mediaActions}><button type="button" onClick={() => navigator.clipboard.writeText(row.object_path)}>Salin path</button><button type="button" disabled={busy || getReferences(row).length > 0} onClick={() => onDelete(row)}>Hapus</button></div>
   </article>)}</div>;
 }

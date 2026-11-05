@@ -73,9 +73,10 @@
 .field { display: grid; min-width: 0; align-content: start; gap: .42rem; color: #c8cbc7; font-size: .71rem; }
 .field > span { color: #c8cbc7; }
 .field b,.toggleField b { color: #7ff3ff; font-weight: 600; }
-.field input,.field textarea { width: 100%; min-height: 2.55rem; border: 1px solid #3a4041; border-radius: 0; padding: .6rem .65rem; background: #141617; color: #f1f0eb; font: inherit; font-size: .76rem; }
+.field input,.field textarea,.field select { width: 100%; min-height: 2.55rem; border: 1px solid #3a4041; border-radius: 0; padding: .6rem .65rem; background: #141617; color: #f1f0eb; font: inherit; font-size: .76rem; }
 .field textarea { min-height: 6.1rem; resize: vertical; line-height: 1.5; }
-.field input:focus-visible,.field textarea:focus-visible,.search:focus-within { outline: 1px solid #7ff3ff; outline-offset: 2px; }
+.field input:focus-visible,.field textarea:focus-visible,.field select:focus-visible,.imageTools select:focus-visible,.search:focus-within { outline: 1px solid #7ff3ff; outline-offset: 2px; }
+.field input:disabled { cursor: not-allowed; opacity: .55; }
 .field small { color: #929693; font-size: .64rem; line-height: 1.45; }
 .settingColor > div { display: flex; align-items: center; gap: .6rem; }
 .settingColor input[type="color"] { width: 3rem; min-height: 2.55rem; padding: .2rem; }
@@ -91,6 +92,10 @@
 .imagePreview code { overflow-wrap: anywhere; color: #7ff3ff; font-size: .62rem; }
 .fieldLabel { color: #c8cbc7; font-size: .71rem; }
 .fieldHint { color: #929693; font-size: .64rem; }
+.sectionHelp { margin: .6rem 0 .85rem; color: #929693; font-size: .67rem; line-height: 1.55; }
+.dirtyState,.savedState { margin: 0 0 .8rem; font-size: .68rem; }
+.dirtyState { color: #ffd49a; }
+.savedState { color: #7ff3c3; }
 .imagePreviewGrid { display: grid; grid-template-columns: repeat(auto-fill,minmax(10rem,1fr)); gap: .65rem; }
 .imagePreviewItem { display: grid; min-width: 0; gap: .4rem; margin: 0; border: 1px solid #343839; padding: .45rem; }
 .imagePreviewItem > img { width: 100%; height: 7rem; object-fit: contain; background: #101112; }
@@ -142,6 +147,7 @@
 .mediaCard > strong { overflow: hidden; color: #d6d8d4; font-size: .72rem; font-weight: 520; text-overflow: ellipsis; white-space: nowrap; }
 .mediaCard code { overflow-wrap: anywhere; color: #7ff3ff; font-size: .61rem; }
 .mediaCard small { color: #929693; font-size: .62rem; }
+.mediaCard .mediaUsage { color: #ffd49a; line-height: 1.5; }
 .mediaActions { justify-content: space-between; border: 0; padding: .2rem 0 0; }
 .mediaActions button { min-height: 2rem; padding: .3rem .45rem; font-size: .64rem; }
 

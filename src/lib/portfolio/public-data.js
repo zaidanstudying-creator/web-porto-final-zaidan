@@ -19,7 +19,7 @@ export async function getPublicPortfolioData() {
     const supabase = await createSupabaseServerClient();
     const [profiles, projects, technologies, projectTechnologies, skills, experiences, history, social, settings] = await Promise.all([
       supabase.from('profiles').select('*').eq('is_primary', true).maybeSingle(),
-      supabase.from('projects').select('*').eq('is_published', true).order('sort_order'),
+      supabase.from('projects').select('*').eq('is_published', true).order('featured', { ascending: false }).order('sort_order'),
       supabase.from('technologies').select('*').eq('is_visible', true).order('sort_order'),
       supabase.from('project_technologies').select('*'),
       supabase.from('skills').select('*').eq('is_visible', true).order('sort_order'),
