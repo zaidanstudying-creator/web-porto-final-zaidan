@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+const REVEALED_STORAGE_KEY = 'portfolio-history-revealed-v1';
+
 function getYear(eventDate) {
   if (!eventDate) return '';
   const year = new Date(`${eventDate}T00:00:00`).getFullYear();
@@ -9,141 +11,134 @@ function getYear(eventDate) {
 }
 
 export default function HistoryCarousel({ items = [] }) {
-  const trackRef = useRef(null);
-  const slideRefs = useRef([]);
+  const dialogRef = useRef(null);
+  const revealedIdsRef = useRef(new Set());
   const [activeIndex, setActiveIndex] = useState(0);
   const [revealedIds, setRevealedIds] = useState(() => new Set());
-  const [animatingIds, setAnimatingIds] = useState(() => new Set());
-  const [blurReady, setBlurReady] = useState(false);
+  const [animatingId, setAnimatingId] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const track = trackRef.current;
-    let savedIds = new Set();
     try {
-      const stored = JSON.parse(window.localStorage.getItem('portfolio-history-revealed-v1') || '[]');
-      if (Array.isArray(stored)) savedIds = new Set(stored.filter((id) => typeof id === 'string'));
-    } catch {
-      // Continue with a per-page reveal if storage is unavailable.
-    }
-    setRevealedIds(savedIds);
-    setBlurReady(true);
-    if (!track || !items.length) return undefined;
-
-    let scrollTimer = 0;
-    const updateActiveSlide = () => {
-      window.clearTimeout(scrollTimer);
-      scrollTimer = window.setTimeout(() => {
-        const center = track.getBoundingClientRect().left + track.clientWidth / 2;
-        let closestIndex = 0;
-        let closestDistance = Infinity;
-
-        slideRefs.current.forEach((slide, index) => {
-          if (!slide) return;
-          const rect = slide.getBoundingClientRect();
-          const distance = Math.abs(rect.left + rect.width / 2 - center);
-          if (distance < closestDistance) {
-            closestDistance = distance;
-            closestIndex = index;
-          }
-        });
-
-        setActiveIndex(closestIndex);
-      }, 120);
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting || entry.intersectionRatio < 0.68) continue;
-        const id = entry.target.dataset.historyId;
-        if (!savedIds.has(id)) {
-          savedIds.add(id);
-          setRevealedIds(new Set(savedIds));
-          const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-          if (!reducedMotion) setAnimatingIds((current) => new Set(current).add(id));
-          try {
-            window.localStorage.setItem('portfolio-history-revealed-v1', JSON.stringify([...savedIds]));
-          } catch {
-            // The slide still stays clear for this page even without storage.
-          }
-        }
-        observer.unobserve(entry.target);
+      const saved = JSON.parse(window.localStorage.getItem(REVEALED_STORAGE_KEY) || '[]');
+      if (Array.isArray(saved)) {
+        revealedIdsRef.current = new Set(saved.filter((id) => typeof id === 'string'));
       }
-    }, { root: track, threshold: [0, 0.68, 0.9, 1] });
+    } catch {
+      // Keep the one-time reveal limited to this page when storage is unavailable.
+    }
+    setRevealedIds(new Set(revealedIdsRef.current));
+    setReady(true);
+  }, []);
 
-    slideRefs.current.forEach((slide) => {
-      if (slide && !savedIds.has(slide.dataset.historyId)) observer.observe(slide);
-    });
-    track.addEventListener('scroll', updateActiveSlide, { passive: true });
+  useEffect(() => {
+    if (!ready || !items.length) return;
+    const item = items[activeIndex];
+    if (!item) return;
 
-    return () => {
-      observer.disconnect();
-      track.removeEventListener('scroll', updateActiveSlide);
-      window.clearTimeout(scrollTimer);
-    };
-  }, [items.length]);
+    const id = String(item.id ?? activeIndex);
+    if (revealedIdsRef.current.has(id)) {
+      setAnimatingId(null);
+      return;
+    }
 
-  const moveTo = (index) => {
-    const boundedIndex = Math.max(0, Math.min(items.length - 1, index));
-    const slide = slideRefs.current[boundedIndex];
-    const track = trackRef.current;
-    if (!slide || !track) return;
-    const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
-    const trackRect = track.getBoundingClientRect();
-    const slideRect = slide.getBoundingClientRect();
-    const targetLeft = track.scrollLeft + slideRect.left - trackRect.left - (track.clientWidth - slide.clientWidth) / 2;
-    track.scrollTo({ left: targetLeft, behavior });
-    setActiveIndex(boundedIndex);
+    const next = new Set(revealedIdsRef.current);
+    next.add(id);
+    revealedIdsRef.current = next;
+    setRevealedIds(next);
+
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setAnimatingId(reducedMotion ? null : id);
+    try {
+      window.localStorage.setItem(REVEALED_STORAGE_KEY, JSON.stringify([...next]));
+    } catch {
+      // The card still stays sharp for the rest of this page session.
+    }
+  }, [activeIndex, items.length, ready]);
+
+  const changeSlide = (direction) => {
+    setActiveIndex((current) => Math.max(0, Math.min(items.length - 1, current + direction)));
+  };
+
+  const openDetails = (item) => {
+    setSelectedItem(item);
+    if (dialogRef.current && !dialogRef.current.open) dialogRef.current.showModal();
+  };
+
+  const closeDetails = () => dialogRef.current?.close();
+
+  const dismissBackdrop = (event) => {
+    const dialog = event.currentTarget;
+    if (event.target !== dialog) return;
+    const rect = dialog.getBoundingClientRect();
+    const inside = event.clientX >= rect.left && event.clientX <= rect.right
+      && event.clientY >= rect.top && event.clientY <= rect.bottom;
+    if (!inside) dialog.close();
   };
 
   if (!items.length) return <p>Published milestones will appear here.</p>;
 
+  const item = items[activeIndex];
+  const itemId = String(item?.id ?? activeIndex);
+  const isRevealed = revealedIds.has(itemId);
+
   return (
     <div className="history-carousel" role="group" aria-roledescription="carousel" aria-label="History milestones">
-      <div className="history-carousel-track" ref={trackRef}>
-        {items.map((item, index) => {
-          const id = String(item.id ?? index);
-          const isRevealed = revealedIds.has(id);
-          const isAnimating = animatingIds.has(id);
-          return (
-            <article
-              className={`history-slide${isRevealed ? ' is-revealed' : ''}${isAnimating ? ' is-animating' : ''}`}
-              key={item.id}
-              data-index={index}
-              data-history-id={id}
-              data-blur-ready={blurReady ? 'true' : 'false'}
-              aria-roledescription="slide"
-              aria-label={`${index + 1} of ${items.length}: ${item.title}`}
-              aria-current={activeIndex === index ? 'true' : undefined}
-              ref={(node) => { slideRefs.current[index] = node; }}
-              onAnimationEnd={(event) => {
-                if (event.target !== event.currentTarget || !isAnimating) return;
-                setAnimatingIds((current) => {
-                  const next = new Set(current);
-                  next.delete(id);
-                  return next;
-                });
-              }}
-            >
+      <div className="history-carousel-stage" aria-live="polite" aria-atomic="true">
+        {item && (
+          <article
+            className={`history-slide${isRevealed ? ' is-revealed' : ''}${animatingId === itemId ? ' is-animating' : ''}`}
+            key={itemId}
+            data-blur-ready={ready ? 'true' : 'false'}
+            aria-roledescription="slide"
+            aria-label={`${activeIndex + 1} of ${items.length}: ${item.title}`}
+            onAnimationEnd={(event) => {
+              if (event.target === event.currentTarget && animatingId === itemId) setAnimatingId(null);
+            }}
+          >
+            <button className="history-slide-open" type="button" aria-haspopup="dialog" onClick={() => openDetails(item)}>
               <span className="history-slide-year">{getYear(item.event_date)}</span>
-              <div className="history-slide-copy">
-                <p className="history-slide-category">{item.category}</p>
-                <h3>{item.title}</h3>
-                {item.description && <p className="history-slide-description">{item.description}</p>}
-                {item.image_url && <img className="history-image" src={item.image_url} alt={item.title} />}
-              </div>
-            </article>
-          );
-        })}
+              <span className="history-slide-copy">
+                <span className="history-slide-category">{item.category}</span>
+                <span className="history-slide-title">{item.title}</span>
+                {item.description && <span className="history-slide-description">{item.description}</span>}
+                {item.image_url && <img className="history-image" src={item.image_url} alt="" />}
+                <span className="history-slide-more">Lihat detail <span aria-hidden="true">↗</span></span>
+              </span>
+            </button>
+          </article>
+        )}
       </div>
       <div className="history-carousel-controls">
-        <button className="history-carousel-arrow" type="button" aria-label="Previous history item" onClick={() => moveTo(activeIndex - 1)} disabled={activeIndex === 0}>
+        <button className="history-carousel-arrow" type="button" aria-label="Previous history item" onClick={() => changeSlide(-1)} disabled={activeIndex === 0}>
           <span aria-hidden="true">←</span>
         </button>
-        <span className="history-carousel-count" aria-live="polite" aria-atomic="true">{String(activeIndex + 1).padStart(2, '0')} <span>/</span> {String(items.length).padStart(2, '0')}</span>
-        <button className="history-carousel-arrow" type="button" aria-label="Next history item" onClick={() => moveTo(activeIndex + 1)} disabled={activeIndex === items.length - 1}>
+        <span className="history-carousel-count">{String(activeIndex + 1).padStart(2, '0')} <span>/</span> {String(items.length).padStart(2, '0')}</span>
+        <button className="history-carousel-arrow" type="button" aria-label="Next history item" onClick={() => changeSlide(1)} disabled={activeIndex === items.length - 1}>
           <span aria-hidden="true">→</span>
         </button>
       </div>
+
+      <dialog
+        className="history-detail-dialog"
+        ref={dialogRef}
+        aria-labelledby="history-detail-title"
+        onClose={() => setSelectedItem(null)}
+        onClick={dismissBackdrop}
+      >
+        {selectedItem && (
+          <div className="history-detail-content">
+            <div className="history-detail-header">
+              <p className="history-slide-category">{selectedItem.category} · {getYear(selectedItem.event_date)}</p>
+              <form method="dialog"><button className="history-detail-close" type="submit" aria-label="Close details">×</button></form>
+            </div>
+            <h3 id="history-detail-title">{selectedItem.title}</h3>
+            {selectedItem.image_url && <img className="history-detail-image" src={selectedItem.image_url} alt={selectedItem.title} />}
+            {selectedItem.description && <p className="history-detail-description">{selectedItem.description}</p>}
+          </div>
+        )}
+      </dialog>
     </div>
   );
 }
