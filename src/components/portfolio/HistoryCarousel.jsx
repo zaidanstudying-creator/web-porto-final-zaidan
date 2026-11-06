@@ -12,19 +12,27 @@ export default function HistoryCarousel({ items = [] }) {
   const trackRef = useRef(null);
   const slideRefs = useRef([]);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [revealedIndexes, setRevealedIndexes] = useState(() => new Set());
+  const [revealedIds, setRevealedIds] = useState(() => new Set());
+  const [animatingIds, setAnimatingIds] = useState(() => new Set());
   const [blurReady, setBlurReady] = useState(false);
 
   useEffect(() => {
-    setBlurReady(true);
     const track = trackRef.current;
+    let savedIds = new Set();
+    try {
+      const stored = JSON.parse(window.localStorage.getItem('portfolio-history-revealed-v1') || '[]');
+      if (Array.isArray(stored)) savedIds = new Set(stored.filter((id) => typeof id === 'string'));
+    } catch {
+      // Continue with a per-page reveal if storage is unavailable.
+    }
+    setRevealedIds(savedIds);
+    setBlurReady(true);
     if (!track || !items.length) return undefined;
 
-    let frame = 0;
+    let scrollTimer = 0;
     const updateActiveSlide = () => {
-      if (frame) return;
-      frame = window.requestAnimationFrame(() => {
-        frame = 0;
+      window.clearTimeout(scrollTimer);
+      scrollTimer = window.setTimeout(() => {
         const center = track.getBoundingClientRect().left + track.clientWidth / 2;
         let closestIndex = 0;
         let closestDistance = Infinity;
@@ -40,43 +48,50 @@ export default function HistoryCarousel({ items = [] }) {
         });
 
         setActiveIndex(closestIndex);
-      });
+      }, 120);
     };
 
     const observer = new IntersectionObserver((entries) => {
       for (const entry of entries) {
         if (!entry.isIntersecting || entry.intersectionRatio < 0.68) continue;
-        const index = Number(entry.target.dataset.index);
-        setRevealedIndexes((current) => {
-          if (current.has(index)) return current;
-          const next = new Set(current);
-          next.add(index);
-          return next;
-        });
+        const id = entry.target.dataset.historyId;
+        if (!savedIds.has(id)) {
+          savedIds.add(id);
+          setRevealedIds(new Set(savedIds));
+          const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          if (!reducedMotion) setAnimatingIds((current) => new Set(current).add(id));
+          try {
+            window.localStorage.setItem('portfolio-history-revealed-v1', JSON.stringify([...savedIds]));
+          } catch {
+            // The slide still stays clear for this page even without storage.
+          }
+        }
         observer.unobserve(entry.target);
       }
-      updateActiveSlide();
     }, { root: track, threshold: [0, 0.68, 0.9, 1] });
 
     slideRefs.current.forEach((slide) => {
-      if (slide) observer.observe(slide);
+      if (slide && !savedIds.has(slide.dataset.historyId)) observer.observe(slide);
     });
     track.addEventListener('scroll', updateActiveSlide, { passive: true });
-    updateActiveSlide();
 
     return () => {
       observer.disconnect();
       track.removeEventListener('scroll', updateActiveSlide);
-      if (frame) window.cancelAnimationFrame(frame);
+      window.clearTimeout(scrollTimer);
     };
   }, [items.length]);
 
   const moveTo = (index) => {
     const boundedIndex = Math.max(0, Math.min(items.length - 1, index));
     const slide = slideRefs.current[boundedIndex];
-    if (!slide) return;
+    const track = trackRef.current;
+    if (!slide || !track) return;
     const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
-    slide.scrollIntoView({ behavior, block: 'nearest', inline: 'center' });
+    const trackRect = track.getBoundingClientRect();
+    const slideRect = slide.getBoundingClientRect();
+    const targetLeft = track.scrollLeft + slideRect.left - trackRect.left - (track.clientWidth - slide.clientWidth) / 2;
+    track.scrollTo({ left: targetLeft, behavior });
     setActiveIndex(boundedIndex);
   };
 
@@ -86,17 +101,28 @@ export default function HistoryCarousel({ items = [] }) {
     <div className="history-carousel" role="group" aria-roledescription="carousel" aria-label="History milestones">
       <div className="history-carousel-track" ref={trackRef}>
         {items.map((item, index) => {
-          const isRevealed = revealedIndexes.has(index);
+          const id = String(item.id ?? index);
+          const isRevealed = revealedIds.has(id);
+          const isAnimating = animatingIds.has(id);
           return (
             <article
-              className={`history-slide${isRevealed ? ' is-revealed' : ''}`}
+              className={`history-slide${isRevealed ? ' is-revealed' : ''}${isAnimating ? ' is-animating' : ''}`}
               key={item.id}
               data-index={index}
+              data-history-id={id}
               data-blur-ready={blurReady ? 'true' : 'false'}
               aria-roledescription="slide"
               aria-label={`${index + 1} of ${items.length}: ${item.title}`}
               aria-current={activeIndex === index ? 'true' : undefined}
               ref={(node) => { slideRefs.current[index] = node; }}
+              onAnimationEnd={(event) => {
+                if (event.target !== event.currentTarget || !isAnimating) return;
+                setAnimatingIds((current) => {
+                  const next = new Set(current);
+                  next.delete(id);
+                  return next;
+                });
+              }}
             >
               <span className="history-slide-year">{getYear(item.event_date)}</span>
               <div className="history-slide-copy">
