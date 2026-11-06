@@ -11,6 +11,7 @@ import {
 } from "@/components/portfolio/ReactBitsPortfolio";
 import ContactForm from "@/components/portfolio/ContactForm";
 import CertificatePreview from "@/components/portfolio/CertificatePreview";
+import HistoryCarousel from "@/components/portfolio/HistoryCarousel";
 import FoldText from "@/components/react-bits/FoldText";
 import SkillLogoLoops from "@/components/portfolio/SkillLogoLoops";
 import { getPublicPortfolioData } from "@/lib/portfolio/public-data";
@@ -135,7 +136,7 @@ export default async function HomePage() {
 
       <section className="page-shell section history-section" id="history" aria-labelledby="history-title">
         <SectionHeading number="05" title="History" id="history-title" description="A timeline of milestones and personal achievements."></SectionHeading>
-        <div className="history-line">{historyEntries.length ? historyEntries.map((item) => <article className="managed-entry" key={item.id}><span className="history-marker" aria-hidden="true" /><span className="entry-index">{new Date(`${item.event_date}T00:00:00`).getFullYear()}</span><div><h3>{item.title}</h3><p>{item.category}</p><small>{item.description}</small>{item.image_url && <img className="history-image" src={item.image_url} alt={item.title} />}</div></article>) : <p>Published milestones will appear here.</p>}</div>
+        <HistoryCarousel items={historyEntries} />
       </section>
 
       <section className="page-shell section certificates-section" id="certificates" aria-labelledby="certificates-title">
