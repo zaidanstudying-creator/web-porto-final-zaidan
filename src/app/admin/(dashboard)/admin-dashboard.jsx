@@ -197,10 +197,10 @@ const settingLabels = {
   'components.glow_cursor.enabled': 'Kontak — aktifkan efek kursor'
 };
 const settingGroups = [
-  ['Kartu profil — foto, nama, status, efek', 'profile_card.'],
-  ['Lanyard — gambar, tali, gerakan', 'lanyard.'],
-  ['Behind the Code — gambar, teks, animasi', 'scroll_expand.'],
-  ['Hero, navigasi, dan tema', null]
+  { title: 'Kartu profil', description: 'Foto, nama, status, warna, dan efek kartu di bagian pembuka.', prefix: 'profile_card.', previewKey: 'profile_card.name' },
+  { title: 'Lanyard', description: 'Kartu identitas, gambar depan-belakang, tali, dan gerakannya.', prefix: 'lanyard.', previewKey: 'lanyard.front_image' },
+  { title: 'Behind the Code', description: 'Gambar, teks, dan animasi profil yang muncul saat halaman digulir.', prefix: 'scroll_expand.', previewKey: 'scroll_expand.title' },
+  { title: 'Hero, navigasi, dan tema', description: 'Nama utama, teknologi, teks berjalan, warna, dan visibilitas bagian.', prefix: null, previewKey: 'hero.text' }
 ];
 
 function blankRecord(section) {
@@ -265,7 +265,6 @@ export default function AdminDashboard({ initialData, initialError }) {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState(null);
   const [uploadFile, setUploadFile] = useState(null);
-  const [activeSettingGroup, setActiveSettingGroup] = useState(settingGroups[0][0]);
 
   const rows = useMemo(() => sortedRows(section, rowsForSection(data, section)), [data, section]);
   const visibleRows = useMemo(() => {
@@ -541,6 +540,16 @@ export default function AdminDashboard({ initialData, initialError }) {
     setNotice({ kind: 'success', text: `Pengaturan ${key} ditambahkan.` });
   }
 
+  function editSetting(row) {
+    editRow(row);
+    window.setTimeout(() => document.getElementById('settings-editor')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80);
+  }
+
+  async function addAndEditSetting(setting) {
+    await createDefaultSetting(setting);
+    window.setTimeout(() => document.getElementById('settings-editor')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120);
+  }
+
   function renderField([name, label, type, required]) {
     const value = form?.[name] ?? (type === 'boolean' ? false : '');
     const settingKey = section === 'site_settings' && name === 'setting_value' ? form?.setting_key : null;
@@ -711,31 +720,30 @@ export default function AdminDashboard({ initialData, initialError }) {
         </div>
       </section> : null}
 
-      {section === 'site_settings' && <section className={styles.settingsIntro}>
-        <div><h2>Atur tampilan per bagian</h2><p>Pilih pengaturan, ubah nilainya, lalu simpan. Pengaturan diterapkan pada komponen website dengan nama yang sama.</p></div>
-        <nav className={styles.settingTabs} aria-label="Portfolio sections to edit">
-          {settingGroups.map(([title]) => <button type="button" key={title} aria-pressed={activeSettingGroup === title}
-            className={activeSettingGroup === title ? styles.settingTabActive : styles.settingTab}
-            onClick={() => {
-              if (!confirmDiscardChanges()) return;
-              setActiveSettingGroup(title);
-              setForm(null);
-              setSavedForm(null);
-              setSelectedId(null);
-            }}>
-            {title.split(' — ')[0]}
-          </button>)}
-        </nav>
-        <div className={styles.defaults}>{settingGroups.filter(([title]) => title === activeSettingGroup).map(([title, prefix]) => <section className={styles.settingGroup} key={title}>
-          <h3>{title}</h3>
-          {settingDefaults.filter(([key]) => prefix ? key.startsWith(prefix) : !key.startsWith('profile_card.') && !key.startsWith('lanyard.') && !key.startsWith('scroll_expand.')).map(([key, value]) => {
-            const row = data.site_settings.find((item) => item.setting_key === key);
-            return <div className={styles.defaultRow} key={key}><span>{settingLabels[key] || key}<small>{key}</small></span>{row
-              ? <button type="button" onClick={() => editRow(row)}>Ubah nilai <span aria-hidden="true">↗</span></button>
-              : <button type="button" disabled={busy} onClick={() => createDefaultSetting([key, value])}>Tambah pengaturan <span aria-hidden="true">＋</span></button>}
-            </div>;
-          })}
-        </section>)}</div>
+      {section === 'site_settings' && <section className={styles.settingsStudio} aria-labelledby="settings-studio-title">
+        <div className={styles.settingsStudioHead}><div><p className={styles.crumb}>EDITOR VISUAL</p><h2 id="settings-studio-title">Pengaturan mengikuti bagian website</h2><p>Pilih bagian yang ingin diubah. Pratinjau di bawah memakai konten dan gaya dari website.</p></div><Link href="/" target="_blank" rel="noreferrer" className={styles.viewSite}>Buka website <span aria-hidden="true">↗</span></Link></div>
+        <div className={styles.settingsCards}>{settingGroups.map((group) => {
+          const settings = settingDefaults.filter(([key]) => group.prefix
+            ? key.startsWith(group.prefix)
+            : !key.startsWith('profile_card.') && !key.startsWith('lanyard.') && !key.startsWith('scroll_expand.'));
+          const previewRow = data.site_settings.find((row) => row.setting_key === group.previewKey);
+          const previewDefault = settings.find(([key]) => key === group.previewKey);
+          const previewValue = previewRow?.setting_value ?? previewDefault?.[1] ?? '';
+          return <article className={styles.settingsCard} key={group.title}>
+            <div className={styles.settingsCardHead}><div><span className={styles.settingsCardEyebrow}>BAGIAN WEBSITE</span><h3>{group.title}</h3><p>{group.description}</p></div><span className={styles.settingsCount}>{settings.length} opsi</span></div>
+            <div className={styles.settingsCardPreview}><AdminContentPreview section="site_settings" form={{ setting_key: group.previewKey, setting_value: JSON.stringify(previewValue) }} data={data} supabase={supabase} /></div>
+            <details className={styles.settingsOptions}>
+              <summary>Atur bagian ini <span aria-hidden="true">↓</span></summary>
+              <div className={styles.settingsOptionList}>{settings.map(([key, defaultValue]) => {
+                const row = data.site_settings.find((item) => item.setting_key === key);
+                const currentValue = row?.setting_value ?? defaultValue;
+                const valueText = Array.isArray(currentValue) ? currentValue.join(' · ') : String(currentValue);
+                return <div className={styles.settingsOption} key={key}><span><strong>{settingLabels[key] || key}</strong><small>{valueText}</small></span>
+                  <button type="button" disabled={busy} onClick={() => row ? editSetting(row) : addAndEditSetting([key, defaultValue])}>{row ? 'Ubah' : 'Siapkan'}</button></div>;
+              })}</div>
+            </details>
+          </article>;
+        })}</div>
       </section>}
 
       {section === 'media_assets' && <section className={styles.mediaUpload}>
@@ -743,8 +751,8 @@ export default function AdminDashboard({ initialData, initialError }) {
         <form onSubmit={uploadMedia}><label className={styles.fileInput}><span>{uploadFile?.name ?? 'Pilih file gambar'}</span><input type="file" accept="image/jpeg,image/png,image/webp,image/avif" onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)} required /></label><button className={styles.primaryButton} type="submit" disabled={busy || !uploadFile}>{busy ? 'Mengunggah…' : 'Unggah gambar'}</button></form>
       </section>}
 
-      {section !== 'overview' && <div className={styles.workspace}>
-        <section className={styles.listPane} aria-label={`${pageTitle} list`}>
+      {section !== 'overview' && <div className={`${styles.workspace} ${section === 'site_settings' ? styles.workspaceSettings : ''}`}>
+        <section className={`${styles.listPane} ${section === 'site_settings' ? styles.settingsListHidden : ''}`} aria-label={`${pageTitle} list`}>
           <div className={styles.listHead}><div><h2>{pageTitle}</h2><span>{rows.length} konten</span></div>{fields[section] && section !== 'site_settings' && !(section === 'profiles' && data.profiles.length > 0) && <button className={styles.addButton} type="button" onClick={addRow}>＋ Tambah</button>}</div>
           {sectionHelp[section] && <p className={styles.sectionHelp}>{sectionHelp[section]}</p>}
           {section !== 'contact_messages' && <label className={styles.search}><span aria-hidden="true">⌕</span><input placeholder={`Cari ${pageTitle.toLowerCase()}`} value={search} onChange={(event) => setSearch(event.target.value)} /></label>}
@@ -756,7 +764,7 @@ export default function AdminDashboard({ initialData, initialError }) {
           </div>
         </section>
 
-        <section className={styles.editor} aria-label={`${pageTitle} editor`}>
+        <section className={`${styles.editor} ${section === 'site_settings' ? styles.settingsEditor : ''}`} id={section === 'site_settings' ? 'settings-editor' : undefined} aria-label={`${pageTitle} editor`}>
           {section === 'contact_messages' ? <MessageViewer row={data.contact_messages.find((item) => item.id === selectedId)} onStatus={updateMessage} onDelete={deleteMessage} busy={busy} />
             : section === 'media_assets' ? <MediaViewer rows={data.media_assets} supabase={supabase} getReferences={(asset) => mediaReferences(asset, data)} onDelete={deleteMedia} busy={busy} />
             : form && fields[section] ? <div className={styles.editorLayout}><form className={styles.editForm} onSubmit={saveRow}>

@@ -44,6 +44,9 @@
 .settingRow span { color: #929693; font: .65rem/1.5 ui-monospace,monospace; overflow-wrap: anywhere; }
 .settingRow strong { font-size: .72rem; font-weight: 450; text-align: right; overflow-wrap: anywhere; }
 .workspace { display: grid; min-height: calc(100svh - 7.5rem); grid-template-columns: minmax(14rem,.72fr) minmax(0,1.5fr); padding-top: 1.5rem; }
+.workspaceSettings { display: block; min-height: 0; }
+.settingsListHidden { display: none; }
+.settingsEditor { padding: 1.5rem 0 0; }
 .listPane { min-width: 0; border-right: 1px solid #343839; padding-right: 1.15rem; }
 .listHead { min-height: 3.2rem; align-items: flex-start; }
 .listHead > div { display: grid; gap: .25rem; }
@@ -118,6 +121,33 @@
 .cancelButton,.messageActions button,.mediaActions button { min-height: 2.65rem; border: 1px solid #454b4b; padding: .5rem .8rem; background: transparent; color: #c8cbc7; font: inherit; font-size: .72rem; cursor: pointer; }
 .cancelButton:hover,.messageActions button:hover,.mediaActions button:hover { border-color: #7ff3ff; color: #7ff3ff; }
 .settingsIntro,.mediaUpload { margin-top: 1.4rem; border-bottom: 1px solid #343839; padding-bottom: 1.1rem; }
+.settingsStudio { margin-top: 1.4rem; }
+.settingsStudioHead { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; border-bottom: 1px solid #343839; padding-bottom: 1rem; }
+.settingsStudioHead h2 { margin: 0; font-size: clamp(1.1rem,2vw,1.5rem); font-weight: 540; letter-spacing: -.04em; }
+.settingsStudioHead p:last-child { max-width: 42rem; margin: .45rem 0 0; color: #929693; font-size: .72rem; line-height: 1.55; }
+.settingsCards { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); align-items: start; gap: 1rem; padding-top: 1rem; }
+.settingsCard { min-width: 0; border: 1px solid #343839; background: #141617; }
+.settingsCardHead { display: flex; align-items: flex-start; justify-content: space-between; gap: .8rem; padding: 1rem 1rem .75rem; }
+.settingsCardEyebrow { color: #7ff3ff; font-size: .54rem; font-weight: 650; letter-spacing: .13em; }
+.settingsCardHead h3 { margin: .25rem 0; color: #f1f0eb; font-size: .94rem; font-weight: 570; }
+.settingsCardHead p { max-width: 30rem; margin: 0; color: #929693; font-size: .67rem; line-height: 1.5; }
+.settingsCount { flex: 0 0 auto; border: 1px solid #3a4041; padding: .22rem .4rem; color: #a5aaa6; font-size: .59rem; }
+.settingsCardPreview { padding: 0 1rem .85rem; }
+.settingsCardPreview > aside { position: static; gap: .55rem; border-color: #292d2e; padding: .7rem; background: #101112; }
+.settingsCardPreview > aside > p:last-child { display: none; }
+.settingsCardPreview > aside > div:first-child { padding-bottom: .45rem; }
+.settingsOptions { border-top: 1px solid #343839; }
+.settingsOptions summary { display: flex; min-height: 2.8rem; align-items: center; justify-content: space-between; padding: .5rem 1rem; color: #7ff3ff; font-size: .7rem; cursor: pointer; list-style: none; }
+.settingsOptions summary::-webkit-details-marker { display: none; }
+.settingsOptions[open] summary { border-bottom: 1px solid #292d2e; }
+.settingsOptionList { display: grid; max-height: 24rem; overflow-y: auto; padding: 0 1rem .6rem; }
+.settingsOption { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: .6rem; border-bottom: 1px solid #292d2e; padding: .5rem 0; }
+.settingsOption > span { display: grid; min-width: 0; gap: .15rem; }
+.settingsOption strong { color: #c8cbc7; font-size: .66rem; font-weight: 500; }
+.settingsOption small { overflow: hidden; color: #777e7b; font-size: .59rem; text-overflow: ellipsis; white-space: nowrap; }
+.settingsOption button { min-width: 3.7rem; min-height: 2.1rem; border: 1px solid #465052; padding: .3rem .5rem; background: transparent; color: #7ff3ff; font: inherit; font-size: .64rem; cursor: pointer; }
+.settingsOption button:hover { border-color: #7ff3ff; background: #192123; }
+.settingsOption button:disabled { cursor: wait; opacity: .55; }
 .settingsIntro h2,.mediaUpload h2 { margin: 0; font-size: .92rem; font-weight: 550; }
 .settingsIntro p,.mediaUpload p { margin: .3rem 0 .9rem; color: #929693; font-size: .7rem; }
 .defaults { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0 1.5rem; }
@@ -159,6 +189,8 @@
   .stats button:nth-child(-n+2) { border-bottom: 1px solid #343839; }
   .overviewGrid { grid-template-columns: 1fr; }
   .workspace { grid-template-columns: minmax(12rem,.78fr) minmax(0,1.22fr); }
+  .settingsCards { grid-template-columns: 1fr; }
+  .settingsStudioHead { align-items: flex-start; flex-direction: column; }
   .editorLayout { grid-template-columns: 1fr; }
   .defaults { grid-template-columns: 1fr; }
 }
@@ -174,9 +206,11 @@
   .topbar { align-items: flex-end; }
   .viewSite { min-height: 2.25rem; font-size: .66rem; }
   .workspace { min-height: 0; grid-template-columns: 1fr; }
+  .workspaceSettings { display: block; }
   .listPane { border-right: 0; border-bottom: 1px solid #343839; padding: 0 0 1rem; }
   .records { max-height: 18rem; }
   .editor { padding: 1.2rem 0 0; }
+  .settingsEditor { padding-top: 1rem; }
   .editorLayout { gap: 1rem; }
   .formGrid { grid-template-columns: 1fr; }
   .wide { grid-column: auto; }
