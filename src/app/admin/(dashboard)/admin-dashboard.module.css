@@ -44,12 +44,14 @@
 .settingRow span { color: #929693; font: .65rem/1.5 ui-monospace,monospace; overflow-wrap: anywhere; }
 .settingRow strong { font-size: .72rem; font-weight: 450; text-align: right; overflow-wrap: anywhere; }
 .workspace { display: grid; min-height: calc(100svh - 7.5rem); grid-template-columns: minmax(14rem,.72fr) minmax(0,1.5fr); padding-top: 1.5rem; }
-.contentLibrary { margin-top: 1.4rem; }
+.contentWorkbench { display: grid; grid-template-columns: minmax(0,1.08fr) minmax(24rem,.92fr); align-items: start; gap: 1.25rem; margin-top: 1.4rem; }
+.contentEditor { min-width: 0; padding: 0; }
+.contentLibrary { min-width: 0; }
 .contentLibraryHead { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; border-bottom: 1px solid #343839; padding-bottom: .9rem; }
 .contentLibraryHead h2 { margin: 0; color: #f1f0eb; font-size: clamp(1.1rem,2vw,1.45rem); font-weight: 540; letter-spacing: -.04em; }
 .contentLibraryHead p:last-child { max-width: 42rem; margin: .4rem 0 0; color: #929693; font-size: .72rem; line-height: 1.55; }
 .contentLibrary > .search { max-width: 30rem; margin-block: .55rem .8rem; }
-.contentGrid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); align-items: stretch; gap: 1rem; }
+.contentGrid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); align-items: stretch; gap: .75rem; }
 .contentCard { display: grid; min-width: 0; grid-template-rows: auto 1fr; overflow: hidden; border: 1px solid #343839; background: #141617; }
 .contentCardSelected { border-color: #7ff3ff; box-shadow: 0 0 0 1px rgb(127 243 255 / 15%); }
 .contentCardMedia { display: grid; aspect-ratio: 16 / 9; place-items: center; overflow: hidden; background: radial-gradient(circle at 70% 20%,rgb(127 243 255 / 12%),transparent 45%),#1b1d1e; }
@@ -63,7 +65,7 @@
 .contentEditButton:hover { border-color: #7ff3ff; background: #192123; }
 .contentEmpty { display: grid; gap: .35rem; border: 1px dashed #454b4b; padding: 1.4rem; color: #929693; font-size: .72rem; }
 .contentEmpty strong { color: #d6d8d4; font-size: .83rem; font-weight: 550; }
-.workspaceSettings { display: block; min-height: 0; }
+.workspaceSettings { display: block; min-height: 0; padding-top: 0; }
 .settingsListHidden { display: none; }
 .settingsEditor { padding: 1.5rem 0 0; }
 .listPane { min-width: 0; border-right: 1px solid #343839; padding-right: 1.15rem; }
@@ -125,7 +127,7 @@
 .imageUploadDisabled { cursor: wait; opacity: .55; }
 .imagePreview { display: flex; min-width: 0; align-items: center; gap: .7rem; border: 1px solid #343839; padding: .5rem; }
 .imagePreview img { width: 5rem; height: 4rem; flex: 0 0 auto; object-fit: contain; background: #1b1d1e; }
-.imagePreview code { overflow-wrap: anywhere; color: #7ff3ff; font-size: .62rem; }
+.imagePreview code,.imageSelected { overflow-wrap: anywhere; color: #7ff3ff; font-size: .62rem; }
 .fieldLabel { color: #c8cbc7; font-size: .71rem; }
 .fieldHint { color: #929693; font-size: .64rem; }
 .sectionHelp { margin: .6rem 0 .85rem; color: #929693; font-size: .67rem; line-height: 1.55; }
@@ -221,8 +223,9 @@
   .stats button:nth-child(-n+2) { border-bottom: 1px solid #343839; }
   .overviewGrid { grid-template-columns: 1fr; }
   .workspace { grid-template-columns: minmax(12rem,.78fr) minmax(0,1.22fr); }
-  .settingsCards { grid-template-columns: 1fr; }
+  .contentWorkbench { grid-template-columns: 1fr; }
   .contentGrid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .settingsCards { grid-template-columns: 1fr; }
   .settingsStudioHead { align-items: flex-start; flex-direction: column; }
   .editorLayout { grid-template-columns: 1fr; }
   .defaults { grid-template-columns: 1fr; }
@@ -240,6 +243,7 @@
   .viewSite { min-height: 2.25rem; font-size: .66rem; }
   .contentLibraryHead { align-items: stretch; flex-direction: column; }
   .contentGrid { grid-template-columns: 1fr; }
+  .contentWorkbench { gap: 1rem; }
   .workspace { min-height: 0; grid-template-columns: 1fr; }
   .workspaceSettings { display: block; }
   .listPane { border-right: 0; border-bottom: 1px solid #343839; padding: 0 0 1rem; }

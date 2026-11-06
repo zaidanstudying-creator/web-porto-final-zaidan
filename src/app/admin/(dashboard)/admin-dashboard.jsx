@@ -27,15 +27,28 @@ const sectionHelp = {
   media_assets: 'Pilih media ini saat mengedit gambar. Jangan hapus file yang masih dipakai oleh konten.'
 };
 
+const fieldHelp = {
+  'projects.slug': 'Dipakai di alamat halaman proyek. Gunakan huruf kecil dan tanda hubung, misalnya website-sekolah.',
+  'projects.summary': 'Teks singkat yang terlihat di kartu proyek.',
+  'projects.description': 'Cerita lengkap proyek yang terlihat saat pengunjung membuka detail.',
+  'projects.preview_paths': 'Tambahkan gambar layar yang akan dilihat pengunjung di detail proyek.',
+  'projects.sort_order': 'Angka lebih kecil tampil lebih dulu.',
+  'experiences.start_date': 'Tanggal mulai akan ditampilkan bersama posisi.',
+  'experiences.end_date': 'Tidak perlu diisi jika posisi masih berjalan.',
+  'history_entries.event_date': 'Tanggal ini menentukan tahun yang terlihat di History.',
+  'certificates.event_date': 'Tanggal ini menentukan tahun pada sertifikat.',
+  'social_links.url': 'Tempel alamat lengkap, termasuk https://, misalnya https://instagram.com/namamu.'
+};
+
 const fields = {
   profiles: [
-    ['full_name', 'Nama lengkap', 'text', true], ['professional_title', 'Jabatan profesional', 'text', true],
+    ['full_name', 'Nama lengkap', 'text', true], ['professional_title', 'Pekerjaan atau jabatan', 'text', true],
     ['headline', 'Kalimat pembuka', 'text'], ['bio', 'Tentang saya', 'textarea'], ['location', 'Lokasi', 'text'],
     ['availability_status', 'Status ketersediaan', 'text'],
-    ['avatar_path', 'Foto profil', 'image'], ['profile_icon_path', 'Pola ikon kartu profil', 'image']
+    ['avatar_path', 'Foto profil', 'image'], ['profile_icon_path', 'Gambar dekorasi kartu profil', 'image']
   ],
   projects: [
-    ['title', 'Nama proyek', 'text', true], ['slug', 'Slug URL', 'text', true],
+    ['title', 'Nama proyek', 'text', true], ['slug', 'Nama pada alamat proyek', 'text', true],
     ['subtitle', 'Subjudul', 'text'], ['summary', 'Ringkasan', 'textarea'], ['description', 'Deskripsi lengkap', 'textarea'],
     ['cover_path', 'Gambar sampul', 'image'], ['preview_paths', 'Screenshot tambahan', 'images'],
     ['github_url', 'URL GitHub', 'url'], ['demo_url', 'URL demo langsung', 'url'],
@@ -553,12 +566,16 @@ export default function AdminDashboard({ initialData, initialError }) {
 
   function editContent(row) {
     editRow(row);
-    window.setTimeout(() => document.getElementById('content-editor')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80);
+    if (window.matchMedia('(max-width: 980px)').matches) {
+      window.setTimeout(() => document.getElementById('content-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+    }
   }
 
   function addContent() {
     addRow();
-    window.setTimeout(() => document.getElementById('content-editor')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80);
+    if (window.matchMedia('(max-width: 980px)').matches) {
+      window.setTimeout(() => document.getElementById('content-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+    }
   }
 
   function renderField([name, label, type, required]) {
@@ -571,15 +588,16 @@ export default function AdminDashboard({ initialData, initialError }) {
     const isImageSetting = Boolean(settingKey && imageSettingKeys.has(settingKey));
     const displayLabel = settingLabels[settingKey] || label;
     const helpText = settingHelp[settingKey];
+    const fieldHint = fieldHelp[`${section}.${name}`];
     if (type === 'images') {
       const imagePaths = Array.isArray(value) ? value : [];
       const libraryImages = data.media_assets.filter((asset) => asset.bucket_id === 'portfolio-public');
       const imageUrl = (path) => /^(https?:)?\/\//i.test(path) || path.startsWith('/')
         ? path : supabase.storage.from('portfolio-public').getPublicUrl(path).data.publicUrl;
       return <div className={`${styles.imageField} ${styles.wide}`} key={name}>
-        <span className={styles.fieldLabel}>{label}</span>
+        <span className={styles.fieldLabel}>{label}{fieldHint && <small>{fieldHint}</small>}</span>
         <div className={styles.imageTools}>
-          <select aria-label={`Add ${label} from uploaded images`} value="" disabled={busy}
+          <select aria-label={`Pilih ${label} dari gambar yang sudah diunggah`} value="" disabled={busy}
             onChange={(event) => {
               const path = event.target.value;
               if (path && !imagePaths.includes(path)) changeField(name, [...imagePaths, path]);
@@ -599,8 +617,8 @@ export default function AdminDashboard({ initialData, initialError }) {
         </div>
         {imagePaths.length ? <div className={styles.imagePreviewGrid}>{imagePaths.map((path, index) => <figure className={styles.imagePreviewItem} key={`${path}-${index}`}>
           <img src={imageUrl(path)} alt={`${label} ${index + 1}`} />
-          <figcaption><code>{path}</code><button type="button" disabled={busy} onClick={() => changeField(name, imagePaths.filter((_, itemIndex) => itemIndex !== index))}>Hapus</button></figcaption>
-        </figure>)}</div> : <small className={styles.fieldHint}>{section === 'certificates' ? 'Gambar tambahan akan tampil sebagai slide setelah gambar utama sertifikat.' : 'Unggah screenshot tambahan agar tampil di carousel detail project.'}</small>}
+          <figcaption><span>Gambar {index + 1}</span><button type="button" disabled={busy} onClick={() => changeField(name, imagePaths.filter((_, itemIndex) => itemIndex !== index))}>Hapus</button></figcaption>
+        </figure>)}</div> : <small className={styles.fieldHint}>{fieldHint || (section === 'certificates' ? 'Gambar tambahan akan terlihat saat pengunjung membuka sertifikat.' : 'Gambar tambahan akan terlihat saat pengunjung membuka detail proyek.')}</small>}
       </div>;
     }
     if (type === 'image' || isImageSetting) {
@@ -612,14 +630,12 @@ export default function AdminDashboard({ initialData, initialError }) {
         : supabase.storage.from('portfolio-public').getPublicUrl(imagePath).data.publicUrl;
       const libraryImages = data.media_assets.filter((asset) => asset.bucket_id === 'portfolio-public');
       return <div className={`${styles.imageField} ${styles.wide}`} key={name}>
-        <label className={styles.field} htmlFor={`${section}-${name}`}>
+        <label className={styles.field} htmlFor={`${section}-${name}-media-picker`}>
           <span>{displayLabel}{required && <b aria-hidden="true"> *</b>}</span>
           {helpText && <small>{helpText}</small>}
-          {!isImageSetting && <input id={`${section}-${name}`} name={name} type="text" required={required} value={imagePath}
-            placeholder="Pilih gambar dari Media atau unggah gambar baru" onChange={(event) => applyPath(event.target.value)} />}
         </label>
         <div className={styles.imageTools}>
-          <select aria-label={`Pilih ${displayLabel} dari gambar yang sudah diunggah`} defaultValue="" disabled={busy}
+          <select id={`${section}-${name}-media-picker`} aria-label={`Pilih ${displayLabel} dari gambar yang sudah diunggah`} value="" disabled={busy}
             onChange={(event) => { if (event.target.value) applyPath(event.target.value); event.target.value = ''; }}>
             <option value="">Pilih gambar dari Media…</option>
             {libraryImages.map((asset) => <option key={asset.id} value={asset.object_path}>{asset.original_name}</option>)}
@@ -634,7 +650,7 @@ export default function AdminDashboard({ initialData, initialError }) {
               }} />
           </label>
         </div>
-        {previewUrl && <div className={styles.imagePreview}><img src={previewUrl} alt={`Pratinjau: ${displayLabel}`} />{!isImageSetting && <code>{imagePath}</code>}</div>}
+        {previewUrl && <div className={styles.imagePreview}><img src={previewUrl} alt={`Pratinjau: ${displayLabel}`} /><span className={styles.imageSelected}>Gambar terpilih</span></div>}
       </div>;
     }
     if (settingKey && colorSettingKeys.has(settingKey)) return <label className={`${styles.field} ${styles.settingColor}`} key={name}>
@@ -675,9 +691,9 @@ export default function AdminDashboard({ initialData, initialError }) {
         onChange={(event) => changeField(name, JSON.stringify(event.target.value))} />
     </label>;
     if (type === 'multi') return <fieldset className={`${styles.field} ${styles.wide} ${styles.multiField}`} key={name}>
-      <legend>{label}</legend>{data.technologies.length ? <div className={styles.multiOptions}>{data.technologies.map((technology) => <label key={technology.id}>
+      <legend>{label}</legend>{fieldHint && <small>{fieldHint}</small>}{data.technologies.length ? <div className={styles.multiOptions}>{data.technologies.map((technology) => <label key={technology.id}>
         <input id={`${section}-${name}-${technology.id}`} name={`${name}[]`} type="checkbox" checked={(value ?? []).includes(technology.id)} onChange={(event) => changeField(name, event.target.checked ? [...(value ?? []), technology.id] : value.filter((id) => id !== technology.id))} />{technology.name}
-      </label>)}</div> : <small>Add technologies first to connect them to a project.</small>}
+      </label>)}</div> : <small>Tambahkan teknologi terlebih dahulu di menu Teknologi.</small>}
     </fieldset>;
     if (type === 'boolean') return <label className={styles.toggleField} key={name}>
       <input id={`${section}-${name}`} name={name} type="checkbox" checked={Boolean(value)} onChange={(event) => {
@@ -685,14 +701,14 @@ export default function AdminDashboard({ initialData, initialError }) {
         changeField(name, checked);
         if (section === 'experiences' && name === 'is_current' && checked) changeField('end_date', '');
       }} />
-      <span>{label}{required && <b aria-hidden="true"> *</b>}</span>
+      <span>{label}{required && <b aria-hidden="true"> *</b>}{fieldHint && <small>{fieldHint}</small>}</span>
       </label>;
     if (type === 'textarea' || type === 'json') return <label className={`${styles.field} ${styles.wide}`} key={name}>
-      <span>{label}{required && <b aria-hidden="true"> *</b>}</span><textarea id={`${section}-${name}`} name={name} rows={type === 'json' ? 5 : 4} required={required} value={value ?? ''} onChange={(event) => changeField(name, event.target.value)} spellCheck={type !== 'json'} />
+      <span>{label}{required && <b aria-hidden="true"> *</b>}{fieldHint && <small>{fieldHint}</small>}</span><textarea id={`${section}-${name}`} name={name} rows={type === 'json' ? 5 : 4} required={required} value={value ?? ''} onChange={(event) => changeField(name, event.target.value)} spellCheck={type !== 'json'} />
       {type === 'json' && <small>String, angka, boolean, atau array JSON sesuai jenis pengaturan.</small>}
     </label>;
     return <label className={styles.field} key={name}>
-      <span>{label}{required && <b aria-hidden="true"> *</b>}</span><input id={`${section}-${name}`} name={name} type={type} required={required} readOnly={section === 'site_settings' && name === 'setting_key' && Boolean(selectedId)} disabled={section === 'experiences' && name === 'end_date' && form?.is_current} value={value ?? ''} onChange={(event) => changeField(name, event.target.value)} />
+      <span>{label}{required && <b aria-hidden="true"> *</b>}{fieldHint && <small>{fieldHint}</small>}</span><input id={`${section}-${name}`} name={name} type={type} required={required} readOnly={section === 'site_settings' && name === 'setting_key' && Boolean(selectedId)} disabled={section === 'experiences' && name === 'end_date' && form?.is_current} value={value ?? ''} onChange={(event) => changeField(name, event.target.value)} />
       {section === 'site_settings' && name === 'setting_key' && selectedId && <small>Kunci ini sudah terhubung ke komponen website dan tidak dapat diubah.</small>}
     </label>;
   }
@@ -767,8 +783,9 @@ export default function AdminDashboard({ initialData, initialError }) {
         <form onSubmit={uploadMedia}><label className={styles.fileInput}><span>{uploadFile?.name ?? 'Pilih file gambar'}</span><input type="file" accept="image/jpeg,image/png,image/webp,image/avif" onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)} required /></label><button className={styles.primaryButton} type="submit" disabled={busy || !uploadFile}>{busy ? 'Mengunggah…' : 'Unggah gambar'}</button></form>
       </section>}
 
+      {fields[section] && section !== 'site_settings' && <div className={styles.contentWorkbench}>
       {fields[section] && section !== 'site_settings' && <section className={styles.contentLibrary} aria-labelledby="content-library-title">
-        <div className={styles.contentLibraryHead}><div><p className={styles.crumb}>KONTEN WEBSITE</p><h2 id="content-library-title">Pilih konten yang ingin diubah</h2><p>Setiap kartu mewakili satu konten. Pilih Ubah untuk membuka form dan pratinjaunya.</p></div>
+        <div className={styles.contentLibraryHead}><div><p className={styles.crumb}>LANGKAH 1</p><h2 id="content-library-title">Pilih konten</h2><p>Pilih kartu yang ingin diubah. Form edit akan terbuka di sebelah kanan.</p></div>
           {!(section === 'profiles' && data.profiles.length > 0) && <button className={styles.primaryButton} type="button" onClick={addContent}>＋ Tambah {pageTitle.toLowerCase()}</button>}
         </div>
         <label className={styles.search}><span aria-hidden="true">⌕</span><input placeholder={`Cari ${pageTitle.toLowerCase()}`} value={search} onChange={(event) => setSearch(event.target.value)} /></label>
@@ -800,11 +817,11 @@ export default function AdminDashboard({ initialData, initialError }) {
           </div>
         </section>
 
-        <section className={`${styles.editor} ${section === 'site_settings' || fields[section] ? styles.settingsEditor : ''}`} id={section === 'site_settings' ? 'settings-editor' : fields[section] ? 'content-editor' : undefined} aria-label={`${pageTitle} editor`}>
+        <section className={`${styles.editor} ${section === 'site_settings' ? styles.settingsEditor : fields[section] ? styles.contentEditor : ''}`} id={section === 'site_settings' ? 'settings-editor' : fields[section] ? 'content-editor' : undefined} aria-label={`${pageTitle} editor`}>
           {section === 'contact_messages' ? <MessageViewer row={data.contact_messages.find((item) => item.id === selectedId)} onStatus={updateMessage} onDelete={deleteMessage} busy={busy} />
             : section === 'media_assets' ? <MediaViewer rows={data.media_assets} supabase={supabase} getReferences={(asset) => mediaReferences(asset, data)} onDelete={deleteMedia} busy={busy} />
             : form && fields[section] ? <div className={styles.editorLayout}><form className={styles.editForm} onSubmit={saveRow}>
-              <div className={styles.editorHead}><div><p className={styles.crumb}>{selectedId ? 'SEDANG MENGEDIT' : 'KONTEN BARU'}</p><h2>{selectedId ? (section === 'site_settings' ? settingLabels[form.setting_key] || recordName(section, form) : recordName(section, form)) : `Tambah ${pageTitle.toLowerCase()}`}</h2>{section === 'site_settings' && <p className={styles.editorDescription}>Ubah pilihan di bawah. Pratinjau di samping ikut berubah sebelum disimpan.</p>}</div>{selectedId && section !== 'site_settings' && <button type="button" className={styles.deleteButton} disabled={busy} onClick={() => deleteRow(form)}>Hapus</button>}</div>
+              <div className={styles.editorHead}><div><p className={styles.crumb}>{section === 'site_settings' ? 'PENGATURAN' : selectedId ? 'LANGKAH 2 / EDIT KONTEN' : 'LANGKAH 2 / KONTEN BARU'}</p><h2>{selectedId ? (section === 'site_settings' ? settingLabels[form.setting_key] || recordName(section, form) : recordName(section, form)) : `Tambah ${pageTitle.toLowerCase()}`}</h2>{fields[section] && section !== 'site_settings' && <p className={styles.editorDescription}>Ubah teks atau gambar, cek pratinjau, lalu tekan Simpan.</p>}{section === 'site_settings' && <p className={styles.editorDescription}>Ubah pilihan di bawah. Pratinjau di samping ikut berubah sebelum disimpan.</p>}</div>{selectedId && section !== 'site_settings' && <button type="button" className={styles.deleteButton} disabled={busy} onClick={() => deleteRow(form)}>Hapus</button>}</div>
               <div className={styles.formGrid}>{fields[section].map(renderField)}</div>
               {form && <p className={isDirty ? styles.dirtyState : styles.savedState}>{isDirty ? 'Ada perubahan yang belum disimpan.' : selectedId ? 'Semua perubahan sudah tersimpan.' : 'Isi konten baru, lalu simpan untuk menampilkannya.'}</p>}
               {notice && <p className={notice.kind === 'error' ? styles.errorNotice : styles.successNotice} role={notice.kind === 'error' ? 'alert' : 'status'}>{notice.text}</p>}
@@ -814,8 +831,9 @@ export default function AdminDashboard({ initialData, initialError }) {
                 setSavedForm(null);
                 setSelectedId(null);
               }}>Tutup editor</button></div>
-            </form><AdminContentPreview section={section} form={form} data={data} supabase={supabase} /></div> : <div className={styles.editorEmpty}><span className={styles.editorRule} /><h2>{fields[section] ? 'Form edit konten' : 'Pilih konten'}</h2><p>{fields[section] ? 'Pilih tombol “Ubah konten” pada kartu di atas. Form dan pratinjau akan muncul di sini.' : 'Pilih item di daftar untuk melihat detailnya.'}</p></div>}
+            </form><AdminContentPreview section={section} form={form} data={data} supabase={supabase} /></div> : <div className={styles.editorEmpty}><span className={styles.editorRule} /><h2>{fields[section] ? 'Langkah 2 / Form edit' : 'Pilih konten'}</h2><p>{fields[section] ? 'Pilih tombol “Ubah konten” pada salah satu kartu di sebelah kiri. Form dan pratinjau akan muncul di sini.' : 'Pilih item di daftar untuk melihat detailnya.'}</p></div>}
         </section>
+      </div>}
       </div>}
     </main>
   </div>;
