@@ -70,7 +70,7 @@ const fields = {
     ['sort_order', 'Urutan tampil', 'number'], ['is_visible', 'Tampilkan di website', 'boolean']
   ],
   site_settings: [
-    ['setting_key', 'Kunci pengaturan', 'text', true], ['setting_value', 'Nilai (JSON)', 'json', true]
+    ['setting_value', 'Isi yang tampil di website', 'json', true]
   ]
 };
 
@@ -93,28 +93,17 @@ const settingDefaults = [
   ['profile_card.name', 'Ihsan Fawwas Zaidan'], ['profile_card.title', 'Full Stack Web Developer'],
   ['profile_card.status', 'Online'], ['profile_card.handle', '@ihsanfawwaszaidan'],
   ['profile_card.icon_pattern', '/images/profile-pattern.svg'], ['profile_card.contact_text', 'Contact Me'],
-  ['profile_card.status_color', '#7FF3FF'], ['profile_card.theme', 'dark'], ['profile_card.radius', 16],
-  ['profile_card.holo', 0.8], ['profile_card.glare', 0.5], ['profile_card.enable_tilt', true],
-  ['profile_card.tilt_strength', 12], ['profile_card.parallax', 8], ['profile_card.enable_mobile_tilt', false],
-  ['profile_card.mobile_tilt_sensitivity', 5], ['profile_card.intro', true], ['profile_card.show_user_info', true],
+  ['profile_card.status_color', '#7FF3FF'], ['profile_card.theme', 'dark'], ['profile_card.show_user_info', true],
   ['scroll_expand.title', 'BEHIND THE CODE'], ['scroll_expand.scroll_hint', 'Scroll to explore'],
   ['scroll_expand.media_path', '/images/about-placeholder.svg'], ['scroll_expand.alt', 'Portfolio profile artwork'],
   ['scroll_expand.kicker', 'PROFILE / 01'], ['scroll_expand.name', 'Ihsan Fawwas Zaidan'],
   ['scroll_expand.subtitle', 'Full Stack Web Developer'],
   ['scroll_expand.description', 'A personal portfolio for selected work, skills, and professional background.'],
-  ['scroll_expand.start_width', 42], ['scroll_expand.start_height', 58], ['scroll_expand.start_radius', 24],
-  ['scroll_expand.end_radius', 0], ['scroll_expand.media_zoom', 1], ['scroll_expand.scroll_distance', 1.2],
-  ['scroll_expand.hold_distance', 0.35], ['scroll_expand.smoothing', 0.1], ['scroll_expand.overlay_scrim', 0.45],
-  ['scroll_expand.use_window_scroll', true],
   ['lanyard.front_image', '/images/lanyard-front.svg'], ['lanyard.back_image', '/images/lanyard-back.svg'],
   ['lanyard.strap_image', '/images/lanyard-strap.svg'], ['lanyard.card_color', '#ffffff'],
   ['lanyard.strap_color', '#eab308'], ['lanyard.size', 0.72], ['lanyard.orientation', 'portrait'],
-  ['lanyard.finish', 'glossy'], ['lanyard.anchor', 'center'], ['lanyard.image_fit', 'cover'],
-  ['lanyard.corner_radius', 0.3], ['lanyard.strap_length', 0.5],
-  ['lanyard.strap_width', 0.65], ['lanyard.metal', 'graphite'], ['lanyard.gravity', 1],
-  ['lanyard.damping', 0.5], ['lanyard.elasticity', 0.5], ['lanyard.breeze', 0.5],
-  ['lanyard.interactive', true], ['lanyard.intro', true],
-  ['glow_cursor.color', '#7FF3FF'], ['glow_cursor.intensity', 1],
+  ['lanyard.finish', 'glossy'], ['lanyard.image_fit', 'cover'], ['lanyard.interactive', true],
+  ['glow_cursor.color', '#7FF3FF'],
   ...['pill_nav', 'tech_text', 'text_loop', 'scroll_velocity', 'profile_card', 'lanyard', 'card_swap', 'scroll_expand', 'glow_cursor']
     .map((name) => [`components.${name}.enabled`, true])
 ];
@@ -128,23 +117,8 @@ const colorSettingKeys = new Set([
   'lanyard.card_color', 'lanyard.strap_color', 'profile_card.status_color'
 ]);
 const arraySettingKeys = new Set(['hero.tech_loop', 'scroll_velocity.texts']);
-const booleanSettingKeys = new Set([
-  'profile_card.enable_tilt', 'profile_card.enable_mobile_tilt', 'profile_card.intro', 'profile_card.show_user_info',
-  'lanyard.interactive', 'lanyard.intro', 'scroll_expand.use_window_scroll'
-]);
-const numberSettingRanges = {
-  'glow_cursor.intensity': [0, 3, 0.1], 'lanyard.size': [0.35, 1.25, 0.01],
-  'lanyard.strap_length': [0.2, 1.2, 0.01], 'lanyard.strap_width': [0.4, 1, 0.01],
-  'lanyard.corner_radius': [0, 0.5, 0.01],
-  'lanyard.gravity': [0, 2, 0.05], 'lanyard.damping': [0, 1, 0.01], 'lanyard.elasticity': [0, 1, 0.01], 'lanyard.breeze': [0, 1, 0.01],
-  'profile_card.radius': [0, 40, 1], 'profile_card.holo': [0, 1, 0.01], 'profile_card.glare': [0, 1, 0.01],
-  'profile_card.tilt_strength': [0, 30, 1], 'profile_card.parallax': [0, 24, 1], 'profile_card.mobile_tilt_sensitivity': [0, 15, 1],
-  'scroll_expand.start_width': [10, 100, 1], 'scroll_expand.start_height': [10, 100, 1],
-  'scroll_expand.start_radius': [0, 80, 1], 'scroll_expand.end_radius': [0, 80, 1],
-  'scroll_expand.media_zoom': [1, 2, 0.01], 'scroll_expand.scroll_distance': [0.5, 3, 0.05],
-  'scroll_expand.hold_distance': [0, 1, 0.01], 'scroll_expand.smoothing': [0.01, 0.5, 0.01],
-  'scroll_expand.overlay_scrim': [0, 1, 0.01]
-};
+const booleanSettingKeys = new Set(['profile_card.show_user_info', 'lanyard.interactive']);
+const numberSettingRanges = { 'lanyard.size': [0.35, 1.25, 0.01] };
 const choiceSettingOptions = {
   'profile_card.theme': ['dark', 'light'],
   'lanyard.orientation': ['portrait', 'landscape'], 'lanyard.finish': ['glossy', 'matte', 'holographic', 'metallic'],
@@ -152,49 +126,50 @@ const choiceSettingOptions = {
   'lanyard.anchor': ['left', 'center', 'right'], 'lanyard.metal': ['graphite', 'silver', 'gold']
 };
 const settingLabels = {
-  'hero.text': 'Hero — nama utama', 'hero.tech_loop': 'Hero — daftar teknologi',
-  'scroll_velocity.texts': 'Teks berjalan — baris teks',
-  'appearance.primary_accent': 'Tema — warna aksen utama', 'appearance.secondary_accent': 'Tema — warna aksen kedua',
-  'profile_card.name': 'Kartu profil — nama', 'profile_card.title': 'Kartu profil — jabatan',
-  'profile_card.status': 'Kartu profil — status', 'profile_card.handle': 'Kartu profil — nama akun sosial',
-  'profile_card.icon_pattern': 'Kartu profil — pola ikon', 'profile_card.contact_text': 'Kartu profil — teks tombol kontak',
-  'profile_card.status_color': 'Kartu profil — warna status', 'profile_card.theme': 'Kartu profil — tema warna',
-  'profile_card.radius': 'Kartu profil — sudut kartu', 'profile_card.holo': 'Kartu profil — efek hologram',
-  'profile_card.glare': 'Kartu profil — efek cahaya', 'profile_card.enable_tilt': 'Kartu profil — aktifkan kemiringan',
-  'profile_card.tilt_strength': 'Kartu profil — kekuatan kemiringan', 'profile_card.parallax': 'Kartu profil — kedalaman parallax',
-  'profile_card.enable_mobile_tilt': 'Kartu profil — kemiringan di ponsel', 'profile_card.mobile_tilt_sensitivity': 'Kartu profil — sensitivitas ponsel',
-  'profile_card.intro': 'Kartu profil — animasi pembuka', 'profile_card.show_user_info': 'Kartu profil — tampilkan info bawah',
-  'scroll_expand.title': 'Behind the Code — judul', 'scroll_expand.scroll_hint': 'Behind the Code — petunjuk scroll',
-  'scroll_expand.media_path': 'Behind the Code — gambar utama', 'scroll_expand.alt': 'Behind the Code — deskripsi gambar',
-  'scroll_expand.kicker': 'Behind the Code — teks kecil', 'scroll_expand.name': 'Behind the Code — nama',
-  'scroll_expand.subtitle': 'Behind the Code — subjudul', 'scroll_expand.description': 'Behind the Code — deskripsi',
-  'scroll_expand.start_width': 'Behind the Code — lebar awal (%)', 'scroll_expand.start_height': 'Behind the Code — tinggi awal (%)',
-  'scroll_expand.start_radius': 'Behind the Code — sudut awal', 'scroll_expand.end_radius': 'Behind the Code — sudut akhir',
-  'scroll_expand.media_zoom': 'Behind the Code — pembesaran gambar', 'scroll_expand.scroll_distance': 'Behind the Code — jarak scroll',
-  'scroll_expand.hold_distance': 'Behind the Code — jeda scroll', 'scroll_expand.smoothing': 'Behind the Code — kehalusan gerakan',
-  'scroll_expand.overlay_scrim': 'Behind the Code — kegelapan lapisan',
-  'scroll_expand.use_window_scroll': 'Behind the Code — gunakan scroll halaman',
-  'lanyard.front_image': 'Lanyard — gambar depan', 'lanyard.back_image': 'Lanyard — gambar belakang',
-  'lanyard.strap_image': 'Lanyard — gambar tali', 'lanyard.card_color': 'Lanyard — warna kartu',
-  'lanyard.strap_color': 'Lanyard — warna tali', 'lanyard.size': 'Lanyard — ukuran tampilan',
-  'lanyard.orientation': 'Lanyard — orientasi kartu', 'lanyard.finish': 'Lanyard — jenis permukaan',
-  'lanyard.image_fit': 'Lanyard — penyesuaian gambar',
-  'lanyard.anchor': 'Lanyard — posisi', 'lanyard.strap_length': 'Lanyard — panjang tali',
-  'lanyard.corner_radius': 'Lanyard — sudut kartu',
-  'lanyard.strap_width': 'Lanyard — lebar tali', 'lanyard.metal': 'Lanyard — warna logam',
-  'lanyard.gravity': 'Lanyard — gravitasi', 'lanyard.damping': 'Lanyard — redaman gerak',
-  'lanyard.elasticity': 'Lanyard — elastisitas', 'lanyard.breeze': 'Lanyard — hembusan angin',
-  'lanyard.interactive': 'Lanyard — gerakan interaktif', 'lanyard.intro': 'Lanyard — animasi pembuka',
-  'glow_cursor.color': 'Kursor kontak — warna efek', 'glow_cursor.intensity': 'Kursor kontak — intensitas efek',
-  'components.pill_nav.enabled': 'Navigasi — tampilkan menu desktop',
-  'components.tech_text.enabled': 'Hero — aktifkan efek teks',
-  'components.text_loop.enabled': 'Hero — aktifkan teks berjalan',
-  'components.scroll_velocity.enabled': 'Teks berjalan — tampilkan bagian ini',
-  'components.profile_card.enabled': 'Kartu profil — tampilkan di website',
-  'components.lanyard.enabled': 'Lanyard — tampilkan di website',
-  'components.card_swap.enabled': 'Proyek — aktifkan tumpukan kartu',
-  'components.scroll_expand.enabled': 'Behind the Code — tampilkan bagian ini',
-  'components.glow_cursor.enabled': 'Kontak — aktifkan efek kursor'
+  'hero.text': 'Nama besar di halaman pembuka', 'hero.tech_loop': 'Teknologi yang berjalan di halaman pembuka',
+  'scroll_velocity.texts': 'Teks yang berjalan di halaman',
+  'appearance.primary_accent': 'Warna aksen utama', 'appearance.secondary_accent': 'Warna aksen kedua',
+  'profile_card.name': 'Nama pada kartu profil', 'profile_card.title': 'Pekerjaan pada kartu profil',
+  'profile_card.status': 'Status pada kartu profil', 'profile_card.handle': 'Nama akun sosial',
+  'profile_card.icon_pattern': 'Gambar dekorasi kartu profil', 'profile_card.contact_text': 'Tulisan tombol kontak',
+  'profile_card.status_color': 'Warna status', 'profile_card.theme': 'Warna kartu profil',
+  'profile_card.show_user_info': 'Tampilkan nama dan pekerjaan di kartu',
+  'scroll_expand.title': 'Judul bagian', 'scroll_expand.scroll_hint': 'Petunjuk saat digulir',
+  'scroll_expand.media_path': 'Gambar bagian', 'scroll_expand.alt': 'Deskripsi gambar untuk pembaca layar',
+  'scroll_expand.kicker': 'Teks kecil di atas judul', 'scroll_expand.name': 'Nama di bagian ini',
+  'scroll_expand.subtitle': 'Pekerjaan di bagian ini', 'scroll_expand.description': 'Deskripsi bagian',
+  'lanyard.front_image': 'Gambar depan kartu', 'lanyard.back_image': 'Gambar belakang kartu',
+  'lanyard.strap_image': 'Gambar tali kartu', 'lanyard.card_color': 'Warna dasar kartu',
+  'lanyard.strap_color': 'Warna tali kartu', 'lanyard.size': 'Ukuran kartu di halaman',
+  'lanyard.orientation': 'Bentuk kartu', 'lanyard.finish': 'Tampilan permukaan kartu',
+  'lanyard.image_fit': 'Cara gambar memenuhi kartu', 'lanyard.interactive': 'Izinkan kartu bergerak saat disentuh',
+  'glow_cursor.color': 'Warna efek di bagian kontak',
+  'components.pill_nav.enabled': 'Tampilkan menu navigasi',
+  'components.tech_text.enabled': 'Tampilkan nama utama dengan efek teks',
+  'components.text_loop.enabled': 'Tampilkan teknologi berjalan',
+  'components.scroll_velocity.enabled': 'Tampilkan baris teks berjalan',
+  'components.profile_card.enabled': 'Tampilkan kartu profil',
+  'components.lanyard.enabled': 'Tampilkan kartu identitas',
+  'components.card_swap.enabled': 'Tampilkan proyek sebagai tumpukan kartu',
+  'components.scroll_expand.enabled': 'Tampilkan bagian Behind the Code',
+  'components.glow_cursor.enabled': 'Tampilkan efek di bagian kontak'
+};
+
+const settingHelp = {
+  'hero.text': 'Tulisan utama yang pertama dilihat pengunjung.',
+  'hero.tech_loop': 'Tulis satu nama teknologi per baris.',
+  'scroll_velocity.texts': 'Tulis satu kalimat per baris.',
+  'appearance.primary_accent': 'Dipakai untuk sorotan dan efek teks.',
+  'appearance.secondary_accent': 'Dipakai untuk aksen pada baris teknologi.',
+  'profile_card.icon_pattern': 'Pilih gambar yang menjadi dekorasi kartu.',
+  'scroll_expand.media_path': 'Gambar yang membesar saat bagian ini digulir.',
+  'scroll_expand.description': 'Kalimat yang muncul di bawah nama dan pekerjaan.',
+  'lanyard.front_image': 'Gambar yang terlihat di bagian depan kartu.',
+  'lanyard.back_image': 'Gambar yang terlihat saat kartu berputar.',
+  'lanyard.strap_image': 'Pilih gambar tali dari Media atau unggah yang baru.',
+  'lanyard.size': 'Geser untuk mengecilkan atau membesarkan kartu.',
+  'components.pill_nav.enabled': 'Matikan jika menu tidak ingin ditampilkan.',
+  'components.lanyard.enabled': 'Sembunyikan jika kartu identitas tidak ingin tampil.'
 };
 const settingGroups = [
   { title: 'Kartu profil', description: 'Foto, nama, status, warna, dan efek kartu di bagian pembuka.', prefix: 'profile_card.', previewKey: 'profile_card.name' },
@@ -231,6 +206,15 @@ function recordMeta(section, row) {
   }
   if (['technologies', 'skills', 'social_links'].includes(section)) return row.is_visible ? 'Tampil di website' : 'Disembunyikan';
   return row.category || '';
+}
+
+function settingValueSummary(key, value) {
+  if (typeof value === 'boolean') return value ? 'Aktif' : 'Tidak aktif';
+  if (Array.isArray(value)) return value.length ? `${value.slice(0, 2).join(' · ')}${value.length > 2 ? ` +${value.length - 2}` : ''}` : 'Belum diisi';
+  if (imageSettingKeys.has(key)) return typeof value === 'string' ? value.split('/').pop() : 'Belum memilih gambar';
+  if (colorSettingKeys.has(key)) return typeof value === 'string' ? value.toUpperCase() : 'Warna belum dipilih';
+  if (key === 'lanyard.size' && Number.isFinite(Number(value))) return `${Math.round(Number(value) * 100)}%`;
+  return String(value ?? 'Belum diisi');
 }
 
 function mediaReferences(asset, data) {
@@ -558,6 +542,8 @@ export default function AdminDashboard({ initialData, initialError }) {
       try { parsedSetting = JSON.parse(value); } catch { parsedSetting = null; }
     }
     const isImageSetting = Boolean(settingKey && imageSettingKeys.has(settingKey));
+    const displayLabel = settingLabels[settingKey] || label;
+    const helpText = settingHelp[settingKey];
     if (type === 'images') {
       const imagePaths = Array.isArray(value) ? value : [];
       const libraryImages = data.media_assets.filter((asset) => asset.bucket_id === 'portfolio-public');
@@ -586,7 +572,7 @@ export default function AdminDashboard({ initialData, initialError }) {
         </div>
         {imagePaths.length ? <div className={styles.imagePreviewGrid}>{imagePaths.map((path, index) => <figure className={styles.imagePreviewItem} key={`${path}-${index}`}>
           <img src={imageUrl(path)} alt={`${label} ${index + 1}`} />
-          <figcaption><code>{path}</code><button type="button" disabled={busy} onClick={() => changeField(name, imagePaths.filter((_, itemIndex) => itemIndex !== index))}>Remove</button></figcaption>
+          <figcaption><code>{path}</code><button type="button" disabled={busy} onClick={() => changeField(name, imagePaths.filter((_, itemIndex) => itemIndex !== index))}>Hapus</button></figcaption>
         </figure>)}</div> : <small className={styles.fieldHint}>{section === 'certificates' ? 'Gambar tambahan akan tampil sebagai slide setelah gambar utama sertifikat.' : 'Unggah screenshot tambahan agar tampil di carousel detail project.'}</small>}
       </div>;
     }
@@ -600,18 +586,19 @@ export default function AdminDashboard({ initialData, initialError }) {
       const libraryImages = data.media_assets.filter((asset) => asset.bucket_id === 'portfolio-public');
       return <div className={`${styles.imageField} ${styles.wide}`} key={name}>
         <label className={styles.field} htmlFor={`${section}-${name}`}>
-          <span>{label}{required && <b aria-hidden="true"> *</b>}</span>
-          <input id={`${section}-${name}`} name={name} type="text" required={required} value={imagePath}
-            placeholder="Upload a new image or choose from Media" onChange={(event) => applyPath(event.target.value)} />
+          <span>{displayLabel}{required && <b aria-hidden="true"> *</b>}</span>
+          {helpText && <small>{helpText}</small>}
+          {!isImageSetting && <input id={`${section}-${name}`} name={name} type="text" required={required} value={imagePath}
+            placeholder="Pilih gambar dari Media atau unggah gambar baru" onChange={(event) => applyPath(event.target.value)} />}
         </label>
         <div className={styles.imageTools}>
-          <select aria-label={`Choose ${label} from uploaded images`} defaultValue="" disabled={busy}
+          <select aria-label={`Pilih ${displayLabel} dari gambar yang sudah diunggah`} defaultValue="" disabled={busy}
             onChange={(event) => { if (event.target.value) applyPath(event.target.value); event.target.value = ''; }}>
-            <option value="">Pilih dari Media…</option>
+            <option value="">Pilih gambar dari Media…</option>
             {libraryImages.map((asset) => <option key={asset.id} value={asset.object_path}>{asset.original_name}</option>)}
           </select>
           <label className={`${styles.imageUploadButton} ${busy ? styles.imageUploadDisabled : ''}`}>
-            <span>{busy ? 'Mengunggah…' : 'Unggah gambar'}</span>
+            <span>{busy ? 'Mengunggah…' : 'Unggah gambar baru'}</span>
             <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" disabled={busy}
               onChange={(event) => {
                 const file = event.target.files?.[0];
@@ -620,42 +607,44 @@ export default function AdminDashboard({ initialData, initialError }) {
               }} />
           </label>
         </div>
-        {previewUrl && <div className={styles.imagePreview}><img src={previewUrl} alt={`Preview: ${label}`} /><code>{imagePath}</code></div>}
+        {previewUrl && <div className={styles.imagePreview}><img src={previewUrl} alt={`Pratinjau: ${displayLabel}`} />{!isImageSetting && <code>{imagePath}</code>}</div>}
       </div>;
     }
     if (settingKey && colorSettingKeys.has(settingKey)) return <label className={`${styles.field} ${styles.settingColor}`} key={name}>
-      <span>{label}</span><div><input aria-label={label} type="color" value={typeof parsedSetting === 'string' ? parsedSetting : '#ffffff'}
+      <span>{displayLabel}</span>{helpText && <small>{helpText}</small>}<div><input aria-label={displayLabel} type="color" value={typeof parsedSetting === 'string' ? parsedSetting : '#ffffff'}
         onChange={(event) => changeField(name, JSON.stringify(event.target.value))} /><code>{parsedSetting}</code></div>
     </label>;
     if (settingKey && numberSettingRanges[settingKey]) {
       const [min, max, step] = numberSettingRanges[settingKey];
       return <label className={styles.field} key={name}>
-        <span>{label}</span><input type="number" min={min} max={max} step={step} value={Number(parsedSetting ?? min)}
-          onChange={(event) => changeField(name, JSON.stringify(Number(event.target.value)))} />
-        <small>{min}–{max}</small>
+        <span>{displayLabel}</span>{helpText && <small>{helpText}</small>}
+        <div className={styles.rangeControl}><input type="range" min={min} max={max} step={step} value={Number(parsedSetting ?? min)}
+          onChange={(event) => changeField(name, JSON.stringify(Number(event.target.value)))} /><output>{Math.round(Number(parsedSetting ?? min) * 100)}%</output></div>
       </label>;
     }
     if ((settingKey && settingKey.startsWith('components.') && settingKey.endsWith('.enabled')) || booleanSettingKeys.has(settingKey)) return <label className={styles.toggleField} key={name}>
       <input type="checkbox" checked={Boolean(parsedSetting)} onChange={(event) => changeField(name, JSON.stringify(event.target.checked))} />
-      <span>{label}</span>
+      <span>{displayLabel}{helpText && <small>{helpText}</small>}</span>
     </label>;
-    if (settingKey && choiceSettingOptions[settingKey]) return <label className={styles.field} key={name}>
-      <span>{label}</span><select value={parsedSetting ?? choiceSettingOptions[settingKey][0]}
-        onChange={(event) => changeField(name, JSON.stringify(event.target.value))}>
-        {choiceSettingOptions[settingKey].map((choice) => <option key={choice} value={choice}>{choice}</option>)}
-      </select>
-    </label>;
+    if (settingKey && choiceSettingOptions[settingKey]) return <fieldset className={`${styles.field} ${styles.wide} ${styles.settingChoices}`} key={name}>
+      <legend>{displayLabel}</legend>{helpText && <small>{helpText}</small>}
+      <div>{choiceSettingOptions[settingKey].map((choice) => <label key={choice}>
+        <input type="radio" name={settingKey} value={choice} checked={(parsedSetting ?? choiceSettingOptions[settingKey][0]) === choice}
+          onChange={() => changeField(name, JSON.stringify(choice))} />
+        <span>{({ portrait: 'Tegak', landscape: 'Mendatar', glossy: 'Mengilap', matte: 'Doff', holographic: 'Hologram', metallic: 'Metalik', cover: 'Penuhi kartu', contain: 'Tampilkan seluruh gambar', dark: 'Gelap', light: 'Terang' })[choice] || choice}</span>
+      </label>)}</div>
+    </fieldset>;
     if (settingKey && arraySettingKeys.has(settingKey)) return <label className={`${styles.field} ${styles.wide}`} key={name}>
-      <span>{label}</span><textarea rows={5} value={Array.isArray(parsedSetting) ? parsedSetting.join('\n') : ''}
+      <span>{displayLabel}</span>{helpText && <small>{helpText}</small>}<textarea rows={5} value={Array.isArray(parsedSetting) ? parsedSetting.join('\n') : ''}
         onChange={(event) => changeField(name, JSON.stringify(event.target.value.split('\n').map((item) => item.trim()).filter(Boolean).slice(0, 12)))} />
-      <small>Tulis satu item per baris.</small>
+      <small>Tekan Enter untuk menambah baris baru.</small>
     </label>;
     if (settingKey === 'scroll_expand.description' && typeof parsedSetting === 'string') return <label className={`${styles.field} ${styles.wide}`} key={name}>
-      <span>{label}</span><textarea rows={5} value={parsedSetting} maxLength={500}
+      <span>{displayLabel}</span>{helpText && <small>{helpText}</small>}<textarea rows={5} value={parsedSetting} maxLength={500}
         onChange={(event) => changeField(name, JSON.stringify(event.target.value))} />
     </label>;
     if (settingKey && typeof parsedSetting === 'string') return <label className={styles.field} key={name}>
-      <span>{label}</span><input type="text" value={parsedSetting} maxLength={500}
+      <span>{displayLabel}</span>{helpText && <small>{helpText}</small>}<input type="text" value={parsedSetting} maxLength={500}
         onChange={(event) => changeField(name, JSON.stringify(event.target.value))} />
     </label>;
     if (type === 'multi') return <fieldset className={`${styles.field} ${styles.wide} ${styles.multiField}`} key={name}>
@@ -737,9 +726,9 @@ export default function AdminDashboard({ initialData, initialError }) {
               <div className={styles.settingsOptionList}>{settings.map(([key, defaultValue]) => {
                 const row = data.site_settings.find((item) => item.setting_key === key);
                 const currentValue = row?.setting_value ?? defaultValue;
-                const valueText = Array.isArray(currentValue) ? currentValue.join(' · ') : String(currentValue);
+                const valueText = settingValueSummary(key, currentValue);
                 return <div className={styles.settingsOption} key={key}><span><strong>{settingLabels[key] || key}</strong><small>{valueText}</small></span>
-                  <button type="button" disabled={busy} onClick={() => row ? editSetting(row) : addAndEditSetting([key, defaultValue])}>{row ? 'Ubah' : 'Siapkan'}</button></div>;
+                  <button type="button" disabled={busy} onClick={() => row ? editSetting(row) : addAndEditSetting([key, defaultValue])}>Atur</button></div>;
               })}</div>
             </details>
           </article>;
@@ -768,7 +757,7 @@ export default function AdminDashboard({ initialData, initialError }) {
           {section === 'contact_messages' ? <MessageViewer row={data.contact_messages.find((item) => item.id === selectedId)} onStatus={updateMessage} onDelete={deleteMessage} busy={busy} />
             : section === 'media_assets' ? <MediaViewer rows={data.media_assets} supabase={supabase} getReferences={(asset) => mediaReferences(asset, data)} onDelete={deleteMedia} busy={busy} />
             : form && fields[section] ? <div className={styles.editorLayout}><form className={styles.editForm} onSubmit={saveRow}>
-              <div className={styles.editorHead}><div><p className={styles.crumb}>{selectedId ? 'SEDANG MENGEDIT' : 'KONTEN BARU'}</p><h2>{selectedId ? recordName(section, form) : `Tambah ${pageTitle.toLowerCase()}`}</h2></div>{selectedId && <button type="button" className={styles.deleteButton} disabled={busy} onClick={() => deleteRow(form)}>Hapus</button>}</div>
+              <div className={styles.editorHead}><div><p className={styles.crumb}>{selectedId ? 'SEDANG MENGEDIT' : 'KONTEN BARU'}</p><h2>{selectedId ? (section === 'site_settings' ? settingLabels[form.setting_key] || recordName(section, form) : recordName(section, form)) : `Tambah ${pageTitle.toLowerCase()}`}</h2>{section === 'site_settings' && <p className={styles.editorDescription}>Ubah pilihan di bawah. Pratinjau di samping ikut berubah sebelum disimpan.</p>}</div>{selectedId && section !== 'site_settings' && <button type="button" className={styles.deleteButton} disabled={busy} onClick={() => deleteRow(form)}>Hapus</button>}</div>
               <div className={styles.formGrid}>{fields[section].map(renderField)}</div>
               {form && <p className={isDirty ? styles.dirtyState : styles.savedState}>{isDirty ? 'Ada perubahan yang belum disimpan.' : selectedId ? 'Semua perubahan sudah tersimpan.' : 'Isi konten baru, lalu simpan untuk menampilkannya.'}</p>}
               {notice && <p className={notice.kind === 'error' ? styles.errorNotice : styles.successNotice} role={notice.kind === 'error' ? 'alert' : 'status'}>{notice.text}</p>}
