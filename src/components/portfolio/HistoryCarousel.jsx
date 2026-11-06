@@ -66,8 +66,6 @@ export default function HistoryCarousel({ items = [] }) {
     if (dialogRef.current && !dialogRef.current.open) dialogRef.current.showModal();
   };
 
-  const closeDetails = () => dialogRef.current?.close();
-
   const dismissBackdrop = (event) => {
     const dialog = event.currentTarget;
     if (event.target !== dialog) return;
@@ -91,6 +89,7 @@ export default function HistoryCarousel({ items = [] }) {
             className={`history-slide${isRevealed ? ' is-revealed' : ''}${animatingId === itemId ? ' is-animating' : ''}`}
             key={itemId}
             data-blur-ready={ready ? 'true' : 'false'}
+            role="group"
             aria-roledescription="slide"
             aria-label={`${activeIndex + 1} of ${items.length}: ${item.title}`}
             onAnimationEnd={(event) => {

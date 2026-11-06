@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { logoutAdmin } from '../actions';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import AdminContentPreview from './AdminContentPreview';
 import styles from './admin-dashboard.module.css';
 
 const nav = [
@@ -758,7 +759,7 @@ export default function AdminDashboard({ initialData, initialError }) {
         <section className={styles.editor} aria-label={`${pageTitle} editor`}>
           {section === 'contact_messages' ? <MessageViewer row={data.contact_messages.find((item) => item.id === selectedId)} onStatus={updateMessage} onDelete={deleteMessage} busy={busy} />
             : section === 'media_assets' ? <MediaViewer rows={data.media_assets} supabase={supabase} getReferences={(asset) => mediaReferences(asset, data)} onDelete={deleteMedia} busy={busy} />
-            : form && fields[section] ? <form className={styles.editForm} onSubmit={saveRow}>
+            : form && fields[section] ? <div className={styles.editorLayout}><form className={styles.editForm} onSubmit={saveRow}>
               <div className={styles.editorHead}><div><p className={styles.crumb}>{selectedId ? 'SEDANG MENGEDIT' : 'KONTEN BARU'}</p><h2>{selectedId ? recordName(section, form) : `Tambah ${pageTitle.toLowerCase()}`}</h2></div>{selectedId && <button type="button" className={styles.deleteButton} disabled={busy} onClick={() => deleteRow(form)}>Hapus</button>}</div>
               <div className={styles.formGrid}>{fields[section].map(renderField)}</div>
               {form && <p className={isDirty ? styles.dirtyState : styles.savedState}>{isDirty ? 'Ada perubahan yang belum disimpan.' : selectedId ? 'Semua perubahan sudah tersimpan.' : 'Isi konten baru, lalu simpan untuk menampilkannya.'}</p>}
@@ -769,7 +770,7 @@ export default function AdminDashboard({ initialData, initialError }) {
                 setSavedForm(null);
                 setSelectedId(null);
               }}>Tutup editor</button></div>
-            </form> : <div className={styles.editorEmpty}><span className={styles.editorRule} /><h2>Pilih konten</h2><p>Pilih item di daftar untuk mengedit, atau gunakan Tambah untuk membuat yang baru.</p></div>}
+            </form><AdminContentPreview section={section} form={form} data={data} supabase={supabase} /></div> : <div className={styles.editorEmpty}><span className={styles.editorRule} /><h2>Pilih konten</h2><p>Pilih item di daftar untuk mengedit, atau gunakan Tambah untuk membuat yang baru.</p></div>}
         </section>
       </div>}
     </main>

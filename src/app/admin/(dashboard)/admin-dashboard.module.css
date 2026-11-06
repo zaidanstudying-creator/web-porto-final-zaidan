@@ -61,11 +61,12 @@
 .empty { display: grid; gap: .35rem; padding: 1.4rem .25rem; color: #929693; font-size: .72rem; }
 .empty strong { color: #d6d8d4; font-size: .78rem; font-weight: 520; }
 .editor { min-width: 0; padding-left: clamp(1.2rem,3vw,2.4rem); }
+.editorLayout { display: grid; grid-template-columns: minmax(0,1.12fr) minmax(15rem,.88fr); align-items: start; gap: 1.2rem; }
 .editorEmpty { display: grid; min-height: 20rem; align-content: center; justify-items: start; }
 .editorRule { width: 1.75rem; height: 1px; margin-bottom: 1rem; background: #7ff3ff; }
 .editorEmpty h2 { margin: 0; font-size: 1.05rem; font-weight: 550; }
 .editorEmpty p { max-width: 25rem; margin: .5rem 0; color: #929693; font-size: .77rem; line-height: 1.6; }
-.editForm { max-width: 56rem; }
+.editForm { min-width: 0; max-width: none; }
 .editorHead { display: flex; min-height: 3.2rem; align-items: flex-start; justify-content: space-between; gap: 1rem; border-bottom: 1px solid #343839; }
 .editorHead h2,.messageView h2 { margin: 0; font-size: 1.05rem; font-weight: 550; letter-spacing: -.025em; overflow-wrap: anywhere; }
 .deleteButton { border: 1px solid #5b4642; padding: .35rem .55rem; background: transparent; color: #ff9a86; font: inherit; font-size: .68rem; cursor: pointer; }
@@ -158,6 +159,7 @@
   .stats button:nth-child(-n+2) { border-bottom: 1px solid #343839; }
   .overviewGrid { grid-template-columns: 1fr; }
   .workspace { grid-template-columns: minmax(12rem,.78fr) minmax(0,1.22fr); }
+  .editorLayout { grid-template-columns: 1fr; }
   .defaults { grid-template-columns: 1fr; }
 }
 @media (max-width: 700px) {
@@ -175,6 +177,7 @@
   .listPane { border-right: 0; border-bottom: 1px solid #343839; padding: 0 0 1rem; }
   .records { max-height: 18rem; }
   .editor { padding: 1.2rem 0 0; }
+  .editorLayout { gap: 1rem; }
   .formGrid { grid-template-columns: 1fr; }
   .wide { grid-column: auto; }
   .stats button { min-height: 6.2rem; padding-left: .6rem; }
