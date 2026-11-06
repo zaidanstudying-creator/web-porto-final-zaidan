@@ -159,7 +159,7 @@ export default function AdminContentPreview({ section, form, data, supabase }) {
         {Array.isArray(form.preview_paths) && form.preview_paths.length > 0 && <small className={styles.previewCount}>+ {form.preview_paths.length} gambar tambahan</small>}
       </div>}
 
-      {section === 'social_links' && <div className={styles.socialPreview}><span>{form.platform || 'Platform'}</span><strong>{form.label || form.platform || 'Nama tautan sosial'}</strong><small>{form.url || 'https://example.com'}</small></div>}
+      {section === 'social_links' && <div className={styles.socialPreview}><span>{form.platform || 'Platform'}</span><strong>{form.label || form.platform || 'Nama tautan sosial'}</strong><small>{form.url || 'Masukkan URL lengkap'}</small></div>}
 
       <p className={styles.note}>Pratinjau berubah saat Anda mengedit. Simpan, lalu muat ulang website untuk menerapkan perubahan.</p>
     </aside>

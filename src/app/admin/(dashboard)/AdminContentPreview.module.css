@@ -7,9 +7,9 @@
 .statusDraft { border-color: #5b5140; color: #ffd49a; }
 .image { display: block; width: 100%; max-width: 100%; max-height: 13rem; object-fit: contain; background: #101112; }
 .imagePlaceholder { display: grid; min-height: 7rem; place-items: center; border: 1px dashed #454b4b; color: #929693; font-size: .65rem; }
-.profilePreview { position: relative; min-height: 13rem; display: grid; align-content: end; gap: .75rem; overflow: hidden; border: 1px solid #454b4b; padding: 1rem; background: radial-gradient(circle at 70% 0%,rgb(127 243 255 / 17%),transparent 45%),#1b1d1e; }
+.profilePreview { position: relative; min-height: 13rem; display: grid; align-content: end; gap: .75rem; overflow: hidden; border: 1px solid #454b4b; padding: 1rem; background: #1b1d1e; }
 .profilePreview > .image { position: absolute; inset: 0; width: 100%; height: 100%; max-height: none; opacity: .28; object-fit: cover; }
-.profileGlow { position: absolute; inset: 0; background: linear-gradient(180deg,transparent 15%,#101112 100%); }
+.profileGlow { position: absolute; inset: 0; background: #101112; opacity: .2; }
 .profileInfo,.previewTag { position: relative; z-index: 1; }
 .profileInfo { display: grid; gap: .22rem; }
 .profileInfo strong { font-size: 1rem; font-weight: 600; }

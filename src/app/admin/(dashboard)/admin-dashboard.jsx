@@ -13,6 +13,12 @@ const nav = [
   ['history_entries', 'Riwayat'], ['certificates', 'Sertifikat'], ['social_links', 'Tautan sosial'], ['site_settings', 'Pengaturan tampilan'],
   ['contact_messages', 'Pesan masuk'], ['media_assets', 'Media']
 ];
+const navGroups = [
+  { title: 'Ringkasan', items: nav.slice(0, 1) },
+  { title: 'Konten portfolio', items: nav.slice(1, 9) },
+  { title: 'Website', items: nav.slice(9, 10) },
+  { title: 'Pesan & media', items: nav.slice(10) }
+];
 
 const sectionHelp = {
   profiles: 'Kelola informasi profil untuk bagian pembuka dan kartu profil. Pengaturan nama atau tampilan khusus ada di Pengaturan tampilan. Foto profil dan pola ikon memiliki fungsi berbeda.',
@@ -277,6 +283,7 @@ export default function AdminDashboard({ initialData, initialError }) {
   const [savedForm, setSavedForm] = useState(null);
   const [search, setSearch] = useState('');
   const [busy, setBusy] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [notice, setNotice] = useState(null);
   const [uploadFile, setUploadFile] = useState(null);
 
@@ -305,6 +312,7 @@ export default function AdminDashboard({ initialData, initialError }) {
   function openSection(id) {
     if (!confirmDiscardChanges()) return;
     setSection(id);
+    setMobileNavOpen(false);
     setSelectedId(null);
     setForm(null);
     setSavedForm(null);
@@ -715,24 +723,28 @@ export default function AdminDashboard({ initialData, initialError }) {
 
   const unreadCount = data.contact_messages.filter((item) => item.status === 'unread').length;
 
-  return <div className={styles.shell}>
+  return <div className={`${styles.shell} ${mobileNavOpen ? styles.menuOpen : ''}`}>
     <aside className={styles.sidebar}>
-      <Link className={styles.brand} href="/" aria-label="Ihsan portfolio home"><span className={styles.brandMark}>IZ</span><span>Ihsan Zaidan<small>Portfolio CMS</small></span></Link>
-      <nav className={styles.navigation} aria-label="Admin sections">
-        {nav.map(([id, label]) => <button className={section === id ? styles.activeNav : styles.navButton} key={id} type="button" onClick={() => openSection(id)}>
-          <span>{label}</span>{id === 'contact_messages' && unreadCount > 0 && <span className={styles.navCount}>{unreadCount}</span>}
-        </button>)}
+      <div className={styles.sidebarHead}><Link className={styles.brand} href="/" aria-label="Ihsan portfolio home"><span className={styles.brandMark}>IZ</span><span>Ihsan Zaidan<small>PORTFOLIO / ADMIN</small></span></Link>
+        <button type="button" className={styles.mobileMenuClose} onClick={() => setMobileNavOpen(false)} aria-label="Tutup menu">×</button></div>
+      <nav className={styles.navigation} aria-label="Bagian admin">
+        {navGroups.map((group) => <div className={styles.navGroup} key={group.title}><span className={styles.navGroupLabel}>{group.title}</span>
+          {group.items.map(([id, label]) => <button aria-current={section === id ? 'page' : undefined} className={section === id ? styles.activeNav : styles.navButton} key={id} type="button" onClick={() => openSection(id)}>
+            <span>{label}</span>{id === 'contact_messages' && unreadCount > 0 && <span className={styles.navCount}>{unreadCount}</span>}
+          </button>)}
+        </div>)}
       </nav>
-      <div className={styles.sidebarFoot}><span>Masuk sebagai admin</span><form action={logoutAdmin}><button type="submit">Keluar <span aria-hidden="true">↗</span></button></form></div>
+      <div className={styles.sidebarFoot}><span><i />Admin portfolio</span><form action={logoutAdmin}><button type="submit">Keluar <span aria-hidden="true">↗</span></button></form></div>
     </aside>
+    {mobileNavOpen && <button className={styles.navScrim} aria-label="Tutup menu" onClick={() => setMobileNavOpen(false)} />}
 
     <main className={styles.main}>
-      <header className={styles.topbar}><div><p className={styles.crumb}>PORTOFOLIO / CMS</p><h1>{pageTitle}</h1></div><Link href="/" target="_blank" rel="noreferrer" className={styles.viewSite}>Lihat website <span aria-hidden="true">↗</span></Link></header>
+      <header className={styles.topbar}><button type="button" className={styles.mobileMenuButton} onClick={() => setMobileNavOpen(true)} aria-expanded={mobileNavOpen} aria-label="Buka menu">≡</button><div><p className={styles.crumb}>PORTOFOLIO <span>/</span> ADMIN</p><h1>{pageTitle}</h1></div><Link href="/" target="_blank" rel="noreferrer" className={styles.viewSite}>Lihat website <span aria-hidden="true">↗</span></Link></header>
       {initialError && <div className={styles.alert} role="alert"><strong>Data belum dapat dimuat.</strong> {initialError} Pastikan konfigurasi dan migrasi Supabase sudah siap.</div>}
       {notice && <p className={notice.kind === 'error' ? styles.errorNotice : styles.successNotice} role={notice.kind === 'error' ? 'alert' : 'status'}>{notice.text}</p>}
 
       {section === 'overview' ? <section className={styles.overview}>
-        <div className={styles.welcome}><p className={styles.crumb}>RUANG KONTEN</p><h2>Kelola konten website</h2><p>Ubah informasi, atur urutannya, lalu pilih konten yang ingin ditampilkan di website.</p></div>
+        <div className={styles.welcome}><div><p className={styles.crumb}>RUANG KONTEN</p><h2>Konten portfolio Anda</h2><p>Semua yang diubah di sini akan mengisi bagian yang tampil di website.</p></div><span className={styles.welcomeIndex}>{nav.length} <i>menu</i></span></div>
         <div className={styles.stats}>
           {[
             ['Proyek tayang', data.projects.filter((item) => item.is_published).length, 'projects'], ['Keahlian tampil', data.skills.filter((item) => item.is_visible).length, 'skills'],
@@ -743,11 +755,8 @@ export default function AdminDashboard({ initialData, initialError }) {
           <section className={styles.overviewBlock}><div className={styles.blockHead}><h2>Bagian konten</h2><span>{nav.length - 1} bagian</span></div>
             {nav.slice(1).map(([id, label]) => <button className={styles.overviewRow} type="button" key={id} onClick={() => openSection(id)}><span>{label}</span><strong>{rowsForSection(data, id).length}</strong><span aria-hidden="true">↗</span></button>)}
           </section>
-          <section className={styles.overviewBlock}><div className={styles.blockHead}><h2>Pengaturan tampilan</h2><span>Komponen website</span></div>
-            {settingDefaults.slice(0, 5).map(([key, defaultValue]) => {
-              const row = data.site_settings.find((item) => item.setting_key === key);
-              return <button type="button" className={styles.settingRow} key={key} onClick={() => openSection('site_settings')}><span>{settingLabels[key] || key}</span><strong>{row ? String(Array.isArray(row.setting_value) ? row.setting_value.join(' · ') : row.setting_value) : String(defaultValue)}</strong></button>;
-            })}
+          <section className={styles.overviewBlock}><div className={styles.blockHead}><h2>Mulai mengedit</h2><span>Alur sederhana</span></div>
+            <div className={styles.startSteps}><button type="button" onClick={() => openSection('projects')}><b>1</b><span><strong>Pilih bagian</strong><small>Contoh: proyek, sertifikat, atau profil.</small></span><i>↗</i></button><button type="button" onClick={() => openSection('site_settings')}><b>2</b><span><strong>Sesuaikan tampilan</strong><small>Atur teks dan visual yang sudah ada di website.</small></span><i>↗</i></button><button type="button" onClick={() => openSection('media_assets')}><b>3</b><span><strong>Kelola gambar</strong><small>Unggah, lalu pilih gambarnya dari editor.</small></span><i>↗</i></button></div>
           </section>
         </div>
       </section> : null}
