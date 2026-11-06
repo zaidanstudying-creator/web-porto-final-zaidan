@@ -152,7 +152,7 @@ export function AboutTransition({ profile, settings = {}, enabled = true }) {
   const name = profile?.full_name || "Ihsan Fawwas Zaidan";
   const title = profile?.professional_title || "Full Stack Web Developer";
   const media = settings['scroll_expand.media_path'] || "/images/about-placeholder.svg";
-  return <div className="about-transition" id="about" aria-label="About Ihsan Fawwas Zaidan">
+  return <div className="about-transition" id="about" aria-label="About Ihsan Fawwas Zaidan" data-cms-setting="scroll_expand.media_path">
     <Mounted name="ScrollExpand" className="scroll-expand-mount" fallback={<Image className="scroll-expand-fallback" src="/images/about-placeholder.svg" alt="Abstract monochrome placeholder artwork" width={1600} height={1000} priority />}>
       {(mod) => {
         const ScrollExpand = mod.default;

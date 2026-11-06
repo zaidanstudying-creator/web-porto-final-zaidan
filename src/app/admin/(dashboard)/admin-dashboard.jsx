@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { logoutAdmin } from '../actions';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
@@ -244,6 +244,69 @@ function contentImagePath(section, row) {
   return '';
 }
 
+function previewImageUrl(supabase, path) {
+  if (!path) return null;
+  return /^(https?:)?\/\//i.test(path) || path.startsWith('/')
+    ? path
+    : supabase.storage.from('portfolio-public').getPublicUrl(path).data.publicUrl;
+}
+
+function makeLivePreview(data, section, form, supabase) {
+  const projects = (data.projects ?? []).filter((row) => row.is_published);
+  const experiences = (data.experiences ?? []).filter((row) => row.is_published);
+  const history = (data.history_entries ?? []).filter((row) => row.is_published);
+  const technologies = (data.technologies ?? []).filter((row) => row.is_visible);
+  const skills = (data.skills ?? []).filter((row) => row.is_visible);
+  const social = (data.social_links ?? []).filter((row) => row.is_visible);
+  const settings = Object.fromEntries((data.site_settings ?? []).map(({ setting_key, setting_value }) => [setting_key, setting_value]));
+  const inject = (rows, draft, predicate = () => true) => {
+    if (!draft || !predicate(draft)) return rows;
+    const index = rows.findIndex((row) => row.id === draft.id);
+    const next = [...rows];
+    if (index >= 0) next[index] = { ...next[index], ...draft };
+    else next.unshift({ ...draft, id: draft.id ?? `preview-${section}`, is_published: true, is_visible: true });
+    return next;
+  };
+
+  let profile = data.profiles?.find((row) => row.is_primary) ?? data.profiles?.[0] ?? null;
+  if (section === 'profiles' && form) profile = { ...profile, ...form };
+  if (profile) profile = { ...profile, avatar_url: previewImageUrl(supabase, profile.avatar_path), profile_icon_url: previewImageUrl(supabase, profile.profile_icon_path) };
+
+  const projectRows = inject(projects, section === 'projects' ? form : null);
+  const projectPreview = projectRows.map((row) => ({
+    ...row,
+    cover_url: previewImageUrl(supabase, row.cover_path),
+    preview_urls: (Array.isArray(row.preview_paths) ? row.preview_paths : []).map((path) => previewImageUrl(supabase, path)).filter(Boolean),
+    technologies: (row.technology_ids
+      ? data.technologies.filter((item) => row.technology_ids.includes(item.id))
+      : data.project_technologies.filter((item) => item.project_id === row.id).map((item) => data.technologies.find((technology) => technology.id === item.technology_id)))
+      .filter(Boolean).map((item) => item.name)
+  }));
+  const experienceRows = inject(experiences, section === 'experiences' ? form : null);
+  const historyDraft = section === 'history_entries' || section === 'certificates' ? form : null;
+  const historyRows = inject(history, historyDraft);
+  if (section === 'site_settings' && form) {
+    let value = form.setting_value;
+    try { value = JSON.parse(value); } catch {}
+    settings[form.setting_key] = value;
+  }
+  const publicSettings = Object.fromEntries(Object.entries(settings).map(([key, value]) => [
+    key,
+    imageSettingKeys.has(key) && typeof value === 'string' ? previewImageUrl(supabase, value) : value
+  ]));
+
+  return {
+    profile,
+    projects: projectPreview,
+    technologies: inject(technologies, section === 'technologies' ? form : null),
+    skills: inject(skills, section === 'skills' ? form : null),
+    experiences: experienceRows.map((row) => ({ ...row, logo_url: previewImageUrl(supabase, row.logo_path) })),
+    history: historyRows.map((row) => ({ ...row, image_url: previewImageUrl(supabase, row.image_path), preview_urls: (Array.isArray(row.preview_paths) ? row.preview_paths : []).map((path) => previewImageUrl(supabase, path)).filter(Boolean) })),
+    social: inject(social, section === 'social_links' ? form : null),
+    settings: publicSettings
+  };
+}
+
 function contentSummary(section, row) {
   if (section === 'profiles') return row.professional_title || row.headline || row.bio;
   if (section === 'projects') return row.summary || row.subtitle || row.description;
@@ -286,6 +349,8 @@ export default function AdminDashboard({ initialData, initialError }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [notice, setNotice] = useState(null);
   const [uploadFile, setUploadFile] = useState(null);
+  const previewFrameRef = useRef(null);
+  const livePreviewContent = useMemo(() => makeLivePreview(data, section, form, supabase), [data, section, form, supabase]);
 
   const rows = useMemo(() => sortedRows(section, rowsForSection(data, section)), [data, section]);
   const visibleRows = useMemo(() => {
@@ -305,6 +370,19 @@ export default function AdminDashboard({ initialData, initialError }) {
     return () => window.removeEventListener('beforeunload', warnBeforeLeave);
   }, [isDirty]);
 
+  useEffect(() => {
+    const sendPreview = () => previewFrameRef.current?.contentWindow?.postMessage({ type: 'portfolio-cms-preview', content: livePreviewContent }, window.location.origin);
+    const receivePreviewMessage = (event) => {
+      if (event.origin !== window.location.origin || event.source !== previewFrameRef.current?.contentWindow) return;
+      if (event.data?.type === 'portfolio-cms-preview-ready') sendPreview();
+      if (event.data?.type === 'portfolio-cms-select' && event.data.settingKey) selectVisualSetting(event.data.settingKey);
+      else if (event.data?.type === 'portfolio-cms-select' && nav.some(([id]) => id === event.data.section)) openSection(event.data.section);
+    };
+    window.addEventListener('message', receivePreviewMessage);
+    sendPreview();
+    return () => window.removeEventListener('message', receivePreviewMessage);
+  }, [livePreviewContent]);
+
   function confirmDiscardChanges() {
     return !isDirty || window.confirm('Perubahan belum disimpan. Buang perubahan ini?');
   }
@@ -317,6 +395,22 @@ export default function AdminDashboard({ initialData, initialError }) {
     setForm(null);
     setSavedForm(null);
     setSearch('');
+    setNotice(null);
+  }
+
+  function selectVisualSetting(key) {
+    if (!confirmDiscardChanges()) return;
+    const row = data.site_settings.find((item) => item.setting_key === key);
+    const fallback = settingDefaults.find(([settingKey]) => settingKey === key)?.[1] ?? '';
+    const nextForm = row
+      ? { ...row, setting_value: JSON.stringify(row.setting_value, null, 2) }
+      : { setting_key: key, setting_value: JSON.stringify(fallback, null, 2) };
+    setSection('site_settings');
+    setMobileNavOpen(false);
+    setSearch('');
+    setSelectedId(row?.id ?? null);
+    setForm(nextForm);
+    setSavedForm(JSON.stringify(nextForm));
     setNotice(null);
   }
 
@@ -371,6 +465,7 @@ export default function AdminDashboard({ initialData, initialError }) {
       if (typeof value === 'string') value = value.trim();
       payload[name] = value;
     }
+    if (section === 'site_settings' && !selectedId) payload.setting_key = form.setting_key;
     if (section === 'profiles') payload.is_primary = true;
     if (section === 'experiences' && payload.is_current) payload.end_date = null;
     if (section === 'certificates') payload.category = 'Sertifikat';
@@ -761,7 +856,7 @@ export default function AdminDashboard({ initialData, initialError }) {
         </div>
       </section> : null}
 
-      {section === 'site_settings' && <section className={styles.settingsStudio} aria-labelledby="settings-studio-title">
+      {section === 'site_settings' && <section className={`${styles.settingsStudio} ${form ? styles.settingsStudioEditing : ''}`} aria-labelledby="settings-studio-title">
         <div className={styles.settingsStudioHead}><div><p className={styles.crumb}>EDITOR VISUAL</p><h2 id="settings-studio-title">Pengaturan mengikuti bagian website</h2><p>Pilih bagian yang ingin diubah. Pratinjau di bawah memakai konten dan gaya dari website.</p></div><Link href="/" target="_blank" rel="noreferrer" className={styles.viewSite}>Buka website <span aria-hidden="true">↗</span></Link></div>
         <div className={styles.settingsCards}>{settingGroups.map((group) => {
           const settings = settingDefaults.filter(([key]) => group.prefix
@@ -792,8 +887,8 @@ export default function AdminDashboard({ initialData, initialError }) {
         <form onSubmit={uploadMedia}><label className={styles.fileInput}><span>{uploadFile?.name ?? 'Pilih file gambar'}</span><input type="file" accept="image/jpeg,image/png,image/webp,image/avif" onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)} required /></label><button className={styles.primaryButton} type="submit" disabled={busy || !uploadFile}>{busy ? 'Mengunggah…' : 'Unggah gambar'}</button></form>
       </section>}
 
-      {fields[section] && section !== 'site_settings' && <div className={styles.contentWorkbench}>
-      {fields[section] && section !== 'site_settings' && <section className={styles.contentLibrary} aria-labelledby="content-library-title">
+      {fields[section] && section !== 'site_settings' && <div className={`${styles.contentWorkbench} ${form ? styles.contentWorkbenchEditing : ''}`}>
+      {fields[section] && section !== 'site_settings' && <section className={`${styles.contentLibrary} ${form ? styles.contentLibraryEditing : ''}`} aria-labelledby="content-library-title">
         <div className={styles.contentLibraryHead}><div><p className={styles.crumb}>LANGKAH 1</p><h2 id="content-library-title">Pilih konten</h2><p>Pilih kartu yang ingin diubah. Form edit akan terbuka di sebelah kanan.</p></div>
           {!(section === 'profiles' && data.profiles.length > 0) && <button className={styles.primaryButton} type="button" onClick={addContent}>＋ Tambah {pageTitle.toLowerCase()}</button>}
         </div>
@@ -830,7 +925,7 @@ export default function AdminDashboard({ initialData, initialError }) {
           {section === 'contact_messages' ? <MessageViewer row={data.contact_messages.find((item) => item.id === selectedId)} onStatus={updateMessage} onDelete={deleteMessage} busy={busy} />
             : section === 'media_assets' ? <MediaViewer rows={data.media_assets} supabase={supabase} getReferences={(asset) => mediaReferences(asset, data)} onDelete={deleteMedia} busy={busy} />
             : form && fields[section] ? <div className={styles.editorLayout}><form className={styles.editForm} onSubmit={saveRow}>
-              <div className={styles.editorHead}><div><p className={styles.crumb}>{section === 'site_settings' ? 'PENGATURAN' : selectedId ? 'LANGKAH 2 / EDIT KONTEN' : 'LANGKAH 2 / KONTEN BARU'}</p><h2>{selectedId ? (section === 'site_settings' ? settingLabels[form.setting_key] || recordName(section, form) : recordName(section, form)) : `Tambah ${pageTitle.toLowerCase()}`}</h2>{fields[section] && section !== 'site_settings' && <p className={styles.editorDescription}>Ubah teks atau gambar, cek pratinjau, lalu tekan Simpan.</p>}{section === 'site_settings' && <p className={styles.editorDescription}>Ubah pilihan di bawah. Pratinjau di samping ikut berubah sebelum disimpan.</p>}</div>{selectedId && section !== 'site_settings' && <button type="button" className={styles.deleteButton} disabled={busy} onClick={() => deleteRow(form)}>Hapus</button>}</div>
+              <div className={styles.editorHead}><div><p className={styles.crumb}>{section === 'site_settings' ? 'PENGATURAN' : selectedId ? 'EDIT KONTEN' : 'KONTEN BARU'}</p><h2>{selectedId ? (section === 'site_settings' ? settingLabels[form.setting_key] || recordName(section, form) : recordName(section, form)) : `Tambah ${pageTitle.toLowerCase()}`}</h2><p className={styles.editorDescription}>Perubahan terlihat langsung pada pratinjau website. Simpan jika sudah sesuai.</p></div><div className={styles.editorHeadActions}>{selectedId && section !== 'site_settings' && <button type="button" className={styles.deleteButton} disabled={busy} onClick={() => deleteRow(form)}>Hapus</button>}{section !== 'site_settings' && <button type="button" className={styles.backToList} onClick={() => { if (!confirmDiscardChanges()) return; setForm(null); setSavedForm(null); setSelectedId(null); }}>Daftar konten</button>}</div></div>
               <div className={styles.formGrid}>{fields[section].map(renderField)}</div>
               {form && <p className={isDirty ? styles.dirtyState : styles.savedState}>{isDirty ? 'Ada perubahan yang belum disimpan.' : selectedId ? 'Semua perubahan sudah tersimpan.' : 'Isi konten baru, lalu simpan untuk menampilkannya.'}</p>}
               {notice && <p className={notice.kind === 'error' ? styles.errorNotice : styles.successNotice} role={notice.kind === 'error' ? 'alert' : 'status'}>{notice.text}</p>}
@@ -840,7 +935,7 @@ export default function AdminDashboard({ initialData, initialError }) {
                 setSavedForm(null);
                 setSelectedId(null);
               }}>Tutup editor</button></div>
-            </form><AdminContentPreview section={section} form={form} data={data} supabase={supabase} /></div> : <div className={styles.editorEmpty}><span className={styles.editorRule} /><h2>{fields[section] ? 'Langkah 2 / Form edit' : 'Pilih konten'}</h2><p>{fields[section] ? 'Pilih tombol “Ubah konten” pada salah satu kartu di sebelah kiri. Form dan pratinjau akan muncul di sini.' : 'Pilih item di daftar untuk melihat detailnya.'}</p></div>}
+            </form><LiveWebsitePreview frameRef={previewFrameRef} content={livePreviewContent} /></div> : fields[section] ? <div className={styles.editorLayout}><div className={styles.editorEmpty}><span className={styles.editorRule} /><h2>Pilih konten untuk mulai</h2><p>Pilih kartu konten di samping atau klik langsung bagian yang ingin diubah pada pratinjau website.</p></div><LiveWebsitePreview frameRef={previewFrameRef} content={livePreviewContent} /></div> : <div className={styles.editorEmpty}><span className={styles.editorRule} /><h2>Pilih konten</h2><p>Pilih item di daftar untuk melihat detailnya.</p></div>}
         </section>
       </div>}
       </div>}
@@ -857,6 +952,13 @@ function MessageViewer({ row, onStatus, onDelete, busy }) {
     <p className={styles.messageBody}>{row.message}</p>
     <div className={styles.messageActions}><button type="button" disabled={busy} onClick={() => onStatus(row, 'read')}>Tandai dibaca</button><button type="button" disabled={busy} onClick={() => onStatus(row, 'archived')}>Arsipkan</button><button type="button" disabled={busy} onClick={() => onStatus(row, 'unread')}>Tandai belum dibaca</button><button type="button" disabled={busy} onClick={() => onDelete(row)}>Hapus pesan</button></div>
   </article>;
+}
+
+function LiveWebsitePreview({ frameRef, content }) {
+  return <section className={styles.liveSitePreview} aria-label="Pratinjau langsung website">
+    <div className={styles.livePreviewHead}><div><span>PRATINJAU LANGSUNG</span><p>Klik bagian website untuk memilih kontennya.</p></div><Link href="/admin/preview" target="_blank" rel="noreferrer">Buka penuh ↗</Link></div>
+    <iframe ref={frameRef} title="Pratinjau langsung portfolio" src="/admin/preview" onLoad={() => frameRef.current?.contentWindow?.postMessage({ type: 'portfolio-cms-preview', content }, window.location.origin)} />
+  </section>;
 }
 
 function MediaViewer({ rows, supabase, getReferences, onDelete, busy }) {

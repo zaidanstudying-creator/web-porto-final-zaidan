@@ -388,3 +388,31 @@
   .welcomeIndex { display: none; }
   .viewSite { gap: .25rem; }
 }
+
+.contentWorkbenchEditing { grid-template-columns: minmax(0,1fr); }
+.contentLibraryEditing { display: none; }
+.settingsStudioEditing .settingsCards { display: none; }
+.editorHeadActions { display: flex; flex: 0 0 auto; align-items: center; gap: .5rem; }
+.backToList { min-height: 2.45rem; border: 1px solid #3b4545; border-radius: .22rem; padding: .4rem .65rem; background: transparent; color: #cbd2ce; font: inherit; font-size: .68rem; cursor: pointer; }
+.backToList:hover { border-color: var(--accent); color: var(--accent); }
+.liveSitePreview { position: sticky; top: .75rem; min-width: 0; overflow: hidden; border: 1px solid #303637; border-radius: .3rem; background: #0b0d0e; }
+.livePreviewHead { display: flex; min-height: 3.2rem; align-items: center; justify-content: space-between; gap: .65rem; border-bottom: 1px solid #303637; padding: .55rem .75rem; }
+.livePreviewHead > div { display: grid; gap: .18rem; }
+.livePreviewHead > div > span { color: var(--accent); font-size: .56rem; font-weight: 700; letter-spacing: .12em; }
+.livePreviewHead p { margin: 0; color: var(--muted); font-size: .63rem; }
+.livePreviewHead a { flex: 0 0 auto; color: #d5dcda; font-size: .64rem; }
+.livePreviewHead a:hover { color: var(--accent); }
+.liveSitePreview iframe { display: block; width: 200%; height: 150svh; border: 0; background: #101112; transform: scale(.5); transform-origin: top left; }
+.editorEmpty { border: 1px dashed #343d3e; border-radius: .3rem; padding: 1.5rem; }
+.editorEmpty h2 { font-size: 1.1rem; }
+.contentCardSelected { outline: 1px solid var(--accent); }
+@media (max-width: 980px) {
+  .liveSitePreview { position: static; }
+  .liveSitePreview iframe { width: 143%; height: 120svh; transform: scale(.7); }
+}
+@media (max-width: 700px) {
+  .editorHead { align-items: flex-start; }
+  .editorHeadActions { flex-direction: column-reverse; align-items: flex-end; }
+  .editorLayout { grid-template-columns: 1fr; }
+  .liveSitePreview iframe { width: 125%; height: 115svh; transform: scale(.8); }
+}
