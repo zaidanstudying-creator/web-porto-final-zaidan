@@ -217,6 +217,23 @@ function settingValueSummary(key, value) {
   return String(value ?? 'Belum diisi');
 }
 
+function contentImagePath(section, row) {
+  if (section === 'profiles') return row.avatar_path;
+  if (section === 'projects') return row.cover_path || row.preview_paths?.[0];
+  if (section === 'experiences') return row.logo_path;
+  if (section === 'history_entries' || section === 'certificates') return row.image_path || row.preview_paths?.[0];
+  return '';
+}
+
+function contentSummary(section, row) {
+  if (section === 'profiles') return row.professional_title || row.headline || row.bio;
+  if (section === 'projects') return row.summary || row.subtitle || row.description;
+  if (section === 'experiences') return row.organization || row.description;
+  if (section === 'history_entries' || section === 'certificates') return row.description || row.category;
+  if (section === 'social_links') return row.url;
+  return row.description || row.category || '';
+}
+
 function mediaReferences(asset, data) {
   if (asset.bucket_id !== 'portfolio-public') return [];
   const path = asset.object_path;
@@ -534,6 +551,16 @@ export default function AdminDashboard({ initialData, initialError }) {
     window.setTimeout(() => document.getElementById('settings-editor')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120);
   }
 
+  function editContent(row) {
+    editRow(row);
+    window.setTimeout(() => document.getElementById('content-editor')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80);
+  }
+
+  function addContent() {
+    addRow();
+    window.setTimeout(() => document.getElementById('content-editor')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80);
+  }
+
   function renderField([name, label, type, required]) {
     const value = form?.[name] ?? (type === 'boolean' ? false : '');
     const settingKey = section === 'site_settings' && name === 'setting_value' ? form?.setting_key : null;
@@ -740,8 +767,28 @@ export default function AdminDashboard({ initialData, initialError }) {
         <form onSubmit={uploadMedia}><label className={styles.fileInput}><span>{uploadFile?.name ?? 'Pilih file gambar'}</span><input type="file" accept="image/jpeg,image/png,image/webp,image/avif" onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)} required /></label><button className={styles.primaryButton} type="submit" disabled={busy || !uploadFile}>{busy ? 'Mengunggah…' : 'Unggah gambar'}</button></form>
       </section>}
 
-      {section !== 'overview' && <div className={`${styles.workspace} ${section === 'site_settings' ? styles.workspaceSettings : ''}`}>
-        <section className={`${styles.listPane} ${section === 'site_settings' ? styles.settingsListHidden : ''}`} aria-label={`${pageTitle} list`}>
+      {fields[section] && section !== 'site_settings' && <section className={styles.contentLibrary} aria-labelledby="content-library-title">
+        <div className={styles.contentLibraryHead}><div><p className={styles.crumb}>KONTEN WEBSITE</p><h2 id="content-library-title">Pilih konten yang ingin diubah</h2><p>Setiap kartu mewakili satu konten. Pilih Ubah untuk membuka form dan pratinjaunya.</p></div>
+          {!(section === 'profiles' && data.profiles.length > 0) && <button className={styles.primaryButton} type="button" onClick={addContent}>＋ Tambah {pageTitle.toLowerCase()}</button>}
+        </div>
+        <label className={styles.search}><span aria-hidden="true">⌕</span><input placeholder={`Cari ${pageTitle.toLowerCase()}`} value={search} onChange={(event) => setSearch(event.target.value)} /></label>
+        {visibleRows.length === 0 ? <div className={styles.contentEmpty}><strong>{search ? 'Konten tidak ditemukan' : 'Belum ada konten'}</strong><span>{search ? 'Coba kata lain atau hapus pencarian.' : `Pilih “Tambah ${pageTitle.toLowerCase()}” untuk membuat konten pertama.`}</span></div>
+          : <div className={styles.contentGrid}>{visibleRows.map((row) => {
+            const path = contentImagePath(section, row);
+            const image = path ? (/^(https?:)?\/\//i.test(path) || path.startsWith('/') ? path : supabase.storage.from('portfolio-public').getPublicUrl(path).data.publicUrl) : '';
+            const summary = contentSummary(section, row);
+            const title = recordName(section, row);
+            return <article className={`${styles.contentCard} ${selectedId === row.id ? styles.contentCardSelected : ''}`} key={row.id}>
+              <div className={styles.contentCardMedia}>{image ? <img src={image} alt="" /> : <span aria-hidden="true">{title.slice(0, 2).toUpperCase()}</span>}</div>
+              <div className={styles.contentCardBody}><p className={styles.contentCardMeta}>{recordMeta(section, row) || pageTitle}</p><h3>{title}</h3>{summary && <p className={styles.contentCardSummary}>{summary}</p>}
+                <button className={styles.contentEditButton} type="button" onClick={() => editContent(row)}>Ubah konten <span aria-hidden="true">↗</span></button>
+              </div>
+            </article>;
+          })}</div>}
+      </section>}
+
+      {section !== 'overview' && <div className={`${styles.workspace} ${section === 'site_settings' || fields[section] ? styles.workspaceSettings : ''}`}>
+        <section className={`${styles.listPane} ${section === 'site_settings' || fields[section] ? styles.settingsListHidden : ''}`} aria-label={`${pageTitle} list`}>
           <div className={styles.listHead}><div><h2>{pageTitle}</h2><span>{rows.length} konten</span></div>{fields[section] && section !== 'site_settings' && !(section === 'profiles' && data.profiles.length > 0) && <button className={styles.addButton} type="button" onClick={addRow}>＋ Tambah</button>}</div>
           {sectionHelp[section] && <p className={styles.sectionHelp}>{sectionHelp[section]}</p>}
           {section !== 'contact_messages' && <label className={styles.search}><span aria-hidden="true">⌕</span><input placeholder={`Cari ${pageTitle.toLowerCase()}`} value={search} onChange={(event) => setSearch(event.target.value)} /></label>}
@@ -753,7 +800,7 @@ export default function AdminDashboard({ initialData, initialError }) {
           </div>
         </section>
 
-        <section className={`${styles.editor} ${section === 'site_settings' ? styles.settingsEditor : ''}`} id={section === 'site_settings' ? 'settings-editor' : undefined} aria-label={`${pageTitle} editor`}>
+        <section className={`${styles.editor} ${section === 'site_settings' || fields[section] ? styles.settingsEditor : ''}`} id={section === 'site_settings' ? 'settings-editor' : fields[section] ? 'content-editor' : undefined} aria-label={`${pageTitle} editor`}>
           {section === 'contact_messages' ? <MessageViewer row={data.contact_messages.find((item) => item.id === selectedId)} onStatus={updateMessage} onDelete={deleteMessage} busy={busy} />
             : section === 'media_assets' ? <MediaViewer rows={data.media_assets} supabase={supabase} getReferences={(asset) => mediaReferences(asset, data)} onDelete={deleteMedia} busy={busy} />
             : form && fields[section] ? <div className={styles.editorLayout}><form className={styles.editForm} onSubmit={saveRow}>
@@ -767,7 +814,7 @@ export default function AdminDashboard({ initialData, initialError }) {
                 setSavedForm(null);
                 setSelectedId(null);
               }}>Tutup editor</button></div>
-            </form><AdminContentPreview section={section} form={form} data={data} supabase={supabase} /></div> : <div className={styles.editorEmpty}><span className={styles.editorRule} /><h2>Pilih konten</h2><p>Pilih item di daftar untuk mengedit, atau gunakan Tambah untuk membuat yang baru.</p></div>}
+            </form><AdminContentPreview section={section} form={form} data={data} supabase={supabase} /></div> : <div className={styles.editorEmpty}><span className={styles.editorRule} /><h2>{fields[section] ? 'Form edit konten' : 'Pilih konten'}</h2><p>{fields[section] ? 'Pilih tombol “Ubah konten” pada kartu di atas. Form dan pratinjau akan muncul di sini.' : 'Pilih item di daftar untuk melihat detailnya.'}</p></div>}
         </section>
       </div>}
     </main>
