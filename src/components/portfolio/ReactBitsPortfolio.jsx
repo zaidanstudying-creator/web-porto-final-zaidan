@@ -182,7 +182,7 @@ export function ProfileCardMount({ profile, settings = {} }) {
   return <Mounted name="ProfileCard" className="profile-card-mount" fallback={<div className="profile-card-fallback"><Image src={profile?.avatar_url || "/images/profile-placeholder.svg"} alt="Profile photograph" width={700} height={900} unoptimized /><strong>{name}</strong><span>{title}</span></div>}>
     {(mod) => {
       const ProfileCard = mod.default;
-      return <ProfileCard name={name}
+      return <ProfileCard profileId={profile?.id} name={name}
         title={title}
         status={settings['profile_card.status'] || profile?.availability_status || "Online"}
         statusColor={settings['profile_card.status_color'] || settings['appearance.primary_accent'] || "#7FF3FF"}

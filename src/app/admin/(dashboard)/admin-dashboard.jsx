@@ -125,6 +125,10 @@ const settingDefaults = [
   ['profile_card.status', 'Online'], ['profile_card.handle', '@ihsanfawwaszaidan'],
   ['profile_card.icon_pattern', '/images/profile-pattern.svg'], ['profile_card.contact_text', 'Contact Me'],
   ['profile_card.status_color', '#7FF3FF'], ['profile_card.theme', 'dark'], ['profile_card.show_user_info', true],
+  ['profile_card.holo', 0.8], ['profile_card.glare', 0.5],
+  ['profile_card.tilt_strength', 12], ['profile_card.parallax', 8], ['profile_card.radius', 16],
+  ['profile_card.enable_tilt', true], ['profile_card.intro', true], ['profile_card.enable_mobile_tilt', false],
+  ['profile_card.mobile_tilt_sensitivity', 5],
   ['scroll_expand.title', 'BEHIND THE CODE'], ['scroll_expand.scroll_hint', 'Scroll to explore'],
   ['scroll_expand.media_path', '/images/about-placeholder.svg'], ['scroll_expand.alt', 'Portfolio profile artwork'],
   ['scroll_expand.kicker', 'PROFILE / 01'], ['scroll_expand.name', 'Ihsan Fawwas Zaidan'],
@@ -148,8 +152,13 @@ const colorSettingKeys = new Set([
   'lanyard.card_color', 'lanyard.strap_color', 'profile_card.status_color'
 ]);
 const arraySettingKeys = new Set(['hero.tech_loop', 'scroll_velocity.texts']);
-const booleanSettingKeys = new Set(['profile_card.show_user_info', 'lanyard.interactive']);
-const numberSettingRanges = { 'lanyard.size': [0.35, 1.25, 0.01] };
+const booleanSettingKeys = new Set(['profile_card.show_user_info', 'profile_card.enable_tilt', 'profile_card.intro', 'profile_card.enable_mobile_tilt', 'lanyard.interactive']);
+const numberSettingRanges = {
+  'profile_card.holo': [0, 1, 0.01], 'profile_card.glare': [0, 1, 0.01],
+  'profile_card.tilt_strength': [0, 30, 1], 'profile_card.parallax': [0, 20, 1],
+  'profile_card.radius': [0, 40, 1], 'profile_card.mobile_tilt_sensitivity': [0, 10, 1],
+  'lanyard.size': [0.35, 1.25, 0.01]
+};
 const choiceSettingOptions = {
   'profile_card.theme': ['dark', 'light'],
   'lanyard.orientation': ['portrait', 'landscape'], 'lanyard.finish': ['glossy', 'matte', 'holographic', 'metallic'],
@@ -165,6 +174,11 @@ const settingLabels = {
   'profile_card.icon_pattern': 'Gambar dekorasi kartu profil', 'profile_card.contact_text': 'Tulisan tombol kontak',
   'profile_card.status_color': 'Warna status', 'profile_card.theme': 'Warna kartu profil',
   'profile_card.show_user_info': 'Tampilkan nama dan pekerjaan di kartu',
+  'profile_card.holo': 'Kekuatan efek hologram', 'profile_card.glare': 'Kekuatan kilau kartu',
+  'profile_card.tilt_strength': 'Kekuatan kemiringan kartu', 'profile_card.parallax': 'Kedalaman gerak kartu',
+  'profile_card.radius': 'Bulat sudut kartu', 'profile_card.enable_tilt': 'Gerakkan kartu saat kursor bergerak',
+  'profile_card.intro': 'Animasi masuk kartu', 'profile_card.enable_mobile_tilt': 'Gerakkan kartu di ponsel',
+  'profile_card.mobile_tilt_sensitivity': 'Sensitivitas gerakan ponsel',
   'scroll_expand.title': 'Judul bagian', 'scroll_expand.scroll_hint': 'Petunjuk saat digulir',
   'scroll_expand.media_path': 'Gambar bagian', 'scroll_expand.alt': 'Deskripsi gambar untuk pembaca layar',
   'scroll_expand.kicker': 'Teks kecil di atas judul', 'scroll_expand.name': 'Nama di bagian ini',
@@ -193,6 +207,8 @@ const settingHelp = {
   'appearance.primary_accent': 'Dipakai untuk sorotan dan efek teks.',
   'appearance.secondary_accent': 'Dipakai untuk aksen pada baris teknologi.',
   'profile_card.icon_pattern': 'Pilih gambar yang menjadi dekorasi kartu.',
+  'profile_card.holo': 'Klik area kilau hologram di pratinjau, lalu geser untuk mengatur intensitasnya.',
+  'profile_card.glare': 'Klik pantulan cahaya di kartu untuk mengatur seberapa terang efeknya.',
   'scroll_expand.media_path': 'Gambar yang membesar saat bagian ini digulir.',
   'scroll_expand.description': 'Kalimat yang muncul di bawah nama dan pekerjaan.',
   'lanyard.front_image': 'Gambar yang terlihat di bagian depan kartu.',

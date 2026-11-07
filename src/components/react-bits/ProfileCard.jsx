@@ -67,6 +67,7 @@ const isDark = color => {
 };
 
 const ProfileCard = ({
+  profileId,
   avatarUrl = '',
   iconUrl,
   miniAvatarUrl,
@@ -315,19 +316,20 @@ const ProfileCard = ({
       <div className="profile-card__body">
         <div className="profile-card__tile">
           <span className="profile-card__sheen" />
-          <span className="profile-card__holo">
+          <span className="profile-card__holo" data-cms-setting="profile_card.holo" aria-label="Efek hologram kartu">
             <span className="profile-card__holo-glow" />
             <span className="profile-card__holo-shift" />
           </span>
           {avatarUrl && (
-            <img className="profile-card__photo" src={avatarUrl} alt={name || ''} loading="lazy" draggable={false} />
+            <img className="profile-card__photo" src={avatarUrl} alt={name || ''} loading="lazy" draggable={false}
+              data-cms-section="profiles" data-cms-record={profileId} data-cms-field="avatar_path" />
           )}
           {(name || title) && (
             <>
               <span className="profile-card__scrim" />
               <div className="profile-card__info">
-                {name && <h3 className="profile-card__name">{name}</h3>}
-                {title && <p className="profile-card__title">{title}</p>}
+                {name && <h3 className="profile-card__name" data-cms-setting="profile_card.name">{name}</h3>}
+                {title && <p className="profile-card__title" data-cms-setting="profile_card.title">{title}</p>}
               </div>
             </>
           )}
@@ -342,8 +344,8 @@ const ProfileCard = ({
               </span>
             )}
             <div className="profile-card__meta">
-              {handle && <span className="profile-card__handle">@{handle}</span>}
-              {status && <span className="profile-card__status">{status}</span>}
+                {handle && <span className="profile-card__handle" data-cms-setting="profile_card.handle">@{handle}</span>}
+                {status && <span className="profile-card__status" data-cms-setting="profile_card.status">{status}</span>}
             </div>
             {contactText && (
               <button
@@ -359,7 +361,7 @@ const ProfileCard = ({
           </div>
         )}
 
-        <span className="profile-card__glare" />
+        <span className="profile-card__glare" data-cms-setting="profile_card.glare" aria-label="Efek kilau kartu" />
         <span className="profile-card__shade" />
         <span className="profile-card__rim" />
       </div>
