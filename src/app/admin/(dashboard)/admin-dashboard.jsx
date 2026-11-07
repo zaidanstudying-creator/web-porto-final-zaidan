@@ -447,6 +447,7 @@ export default function AdminDashboard({ initialData, initialError }) {
     setForm(nextForm);
     setSavedForm(JSON.stringify(nextForm));
     setNotice(null);
+    window.setTimeout(() => document.getElementById('settings-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
   }
 
   function selectVisualRecord(targetSection, recordId, fieldName) {
@@ -699,30 +700,9 @@ export default function AdminDashboard({ initialData, initialError }) {
     setNotice({ kind: 'success', text: 'File media dihapus.' });
   }
 
-  async function createDefaultSetting([key, value]) {
-    if (!confirmDiscardChanges()) return;
-    const exists = data.site_settings.some((row) => row.setting_key === key);
-    if (exists) return;
-    setBusy(true);
-    const { data: saved, error } = await supabase.from('site_settings').insert({ setting_key: key, setting_value: value }).select().single();
-    setBusy(false);
-    if (error) { setNotice({ kind: 'error', text: error.message }); return; }
-    setData((current) => ({ ...current, site_settings: [...current.site_settings, saved] }));
-    const nextForm = { ...saved, setting_value: JSON.stringify(saved.setting_value, null, 2) };
-    setSelectedId(saved.id);
-    setForm(nextForm);
-    setSavedForm(JSON.stringify(nextForm));
-    setNotice({ kind: 'success', text: `Pengaturan ${key} ditambahkan.` });
-  }
-
   function editSetting(row) {
     editRow(row);
     window.setTimeout(() => document.getElementById('settings-editor')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80);
-  }
-
-  async function addAndEditSetting(setting) {
-    await createDefaultSetting(setting);
-    window.setTimeout(() => document.getElementById('settings-editor')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120);
   }
 
   function editContent(row) {
@@ -927,7 +907,7 @@ export default function AdminDashboard({ initialData, initialError }) {
                 const currentValue = row?.setting_value ?? defaultValue;
                 const valueText = settingValueSummary(key, currentValue);
                 return <div className={styles.settingsOption} key={key}><span><strong>{settingLabels[key] || key}</strong><small>{valueText}</small></span>
-                  <button type="button" disabled={busy} onClick={() => row ? editSetting(row) : addAndEditSetting([key, defaultValue])}>Atur</button></div>;
+                  <button type="button" onClick={() => selectVisualSetting(key)}>Atur</button></div>;
             })}</div>
           </article>;
         })}</div>
