@@ -179,6 +179,7 @@
 .settingsOptions summary::-webkit-details-marker { display: none; }
 .settingsOptions[open] summary { border-bottom: 1px solid #292d2e; }
 .settingsOptionList { display: grid; padding: 0 1rem .6rem; }
+.settingsOptionWrap { min-width: 0; border-bottom: 1px solid #292d2e; }
 .settingsOption { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: .6rem; border-bottom: 1px solid #292d2e; padding: .5rem 0; }
 .settingsOption > span { display: grid; min-width: 0; gap: .15rem; }
 .settingsOption strong { color: #c8cbc7; font-size: .66rem; font-weight: 500; }
@@ -186,6 +187,9 @@
 .settingsOption button { min-width: 3.7rem; min-height: 2.1rem; border: 1px solid #465052; padding: .3rem .5rem; background: transparent; color: #7ff3ff; font: inherit; font-size: .64rem; cursor: pointer; }
 .settingsOption button:hover { border-color: #7ff3ff; background: #192123; }
 .settingsOption button:disabled { cursor: wait; opacity: .55; }
+.inlineSettingForm { display: grid; gap: .8rem; margin: .2rem 0 .8rem; border: 1px solid #354344; padding: .8rem; background: #101516; }
+.inlineSettingForm .formGrid { padding: 0; }
+.inlineSettingForm .formActions { border: 0; padding: 0; }
 .settingsIntro h2,.mediaUpload h2 { margin: 0; font-size: .92rem; font-weight: 550; }
 .settingsIntro p,.mediaUpload p { margin: .3rem 0 .9rem; color: #929693; font-size: .7rem; }
 .defaults { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0 1.5rem; }

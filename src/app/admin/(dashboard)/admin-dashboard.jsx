@@ -377,6 +377,7 @@ export default function AdminDashboard({ initialData, initialError }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [notice, setNotice] = useState(null);
   const [uploadFile, setUploadFile] = useState(null);
+  const [inlineSettingEditor, setInlineSettingEditor] = useState(false);
   const previewFrameRef = useRef(null);
   const livePreviewContent = useMemo(() => makeLivePreview(data, section, form, supabase), [data, section, form, supabase]);
 
@@ -403,7 +404,10 @@ export default function AdminDashboard({ initialData, initialError }) {
     const receivePreviewMessage = (event) => {
       if (event.origin !== window.location.origin || event.source !== previewFrameRef.current?.contentWindow) return;
       if (event.data?.type === 'portfolio-cms-preview-ready') sendPreview();
-      if (event.data?.type === 'portfolio-cms-select' && event.data.settingKey) selectVisualSetting(event.data.settingKey);
+      if (event.data?.type === 'portfolio-cms-select' && event.data.settingKey) {
+        setInlineSettingEditor(false);
+        selectVisualSetting(event.data.settingKey);
+      }
       else if (event.data?.type === 'portfolio-cms-select' && nav.some(([id]) => id === event.data.section)) {
         if (event.data.recordId) selectVisualRecord(event.data.section, event.data.recordId, event.data.field);
         else openSection(event.data.section);
@@ -425,6 +429,7 @@ export default function AdminDashboard({ initialData, initialError }) {
     setSelectedId(null);
     setForm(null);
     setSavedForm(null);
+    setInlineSettingEditor(false);
     setSearch('');
     setNotice(null);
   }
@@ -447,7 +452,21 @@ export default function AdminDashboard({ initialData, initialError }) {
     setForm(nextForm);
     setSavedForm(JSON.stringify(nextForm));
     setNotice(null);
-    window.setTimeout(() => document.getElementById('settings-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
+  }
+
+  function editSettingInline(key) {
+    setInlineSettingEditor(true);
+    selectVisualSetting(key);
+    window.setTimeout(() => document.getElementById('site_settings-setting_value')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120);
+  }
+
+  function closeInlineSettingEditor() {
+    if (!confirmDiscardChanges()) return;
+    setInlineSettingEditor(false);
+    setForm(null);
+    setSavedForm(null);
+    setSelectedId(null);
+    setNotice(null);
   }
 
   function selectVisualRecord(targetSection, recordId, fieldName) {
@@ -906,8 +925,19 @@ export default function AdminDashboard({ initialData, initialError }) {
                 const row = data.site_settings.find((item) => item.setting_key === key);
                 const currentValue = row?.setting_value ?? defaultValue;
                 const valueText = settingValueSummary(key, currentValue);
-                return <div className={styles.settingsOption} key={key}><span><strong>{settingLabels[key] || key}</strong><small>{valueText}</small></span>
-                  <button type="button" onClick={() => selectVisualSetting(key)}>Atur</button></div>;
+                const isEditing = inlineSettingEditor && form?.setting_key === key;
+                return <div className={styles.settingsOptionWrap} key={key}>
+                  <div className={styles.settingsOption}><span><strong>{settingLabels[key] || key}</strong><small>{valueText}</small></span>
+                    <button type="button" onClick={() => editSettingInline(key)}>Atur</button></div>
+                  {isEditing && <form className={styles.inlineSettingForm} onSubmit={saveRow}>
+                    <div className={styles.formGrid}>{fields.site_settings.map(renderField)}</div>
+                    {notice && <p className={notice.kind === 'error' ? styles.errorNotice : styles.successNotice} role={notice.kind === 'error' ? 'alert' : 'status'}>{notice.text}</p>}
+                    <div className={styles.formActions}>
+                      <button type="submit" className={styles.primaryButton} disabled={busy}>{busy ? 'Menyimpan…' : 'Simpan perubahan'}</button>
+                      <button type="button" className={styles.cancelButton} onClick={closeInlineSettingEditor}>Tutup editor</button>
+                    </div>
+                  </form>}
+                </div>;
             })}</div>
           </article>;
         })}</div>
@@ -939,7 +969,7 @@ export default function AdminDashboard({ initialData, initialError }) {
           })}</div>}
       </section>}
 
-      {section !== 'overview' && <div className={`${styles.workspace} ${section === 'site_settings' || fields[section] ? styles.workspaceSettings : ''}`}>
+      {section !== 'overview' && !(section === 'site_settings' && inlineSettingEditor) && <div className={`${styles.workspace} ${section === 'site_settings' || fields[section] ? styles.workspaceSettings : ''}`}>
         <section className={`${styles.listPane} ${section === 'site_settings' || fields[section] ? styles.settingsListHidden : ''}`} aria-label={`${pageTitle} list`}>
           <div className={styles.listHead}><div><h2>{pageTitle}</h2><span>{rows.length} konten</span></div>{fields[section] && section !== 'site_settings' && !(section === 'profiles' && data.profiles.length > 0) && <button className={styles.addButton} type="button" onClick={addRow}>＋ Tambah</button>}</div>
           {sectionHelp[section] && <p className={styles.sectionHelp}>{sectionHelp[section]}</p>}
