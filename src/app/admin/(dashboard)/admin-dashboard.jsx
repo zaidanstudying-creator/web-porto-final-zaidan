@@ -925,9 +925,17 @@ export default function AdminDashboard({ initialData, initialError }) {
           const previewValue = previewRow?.setting_value ?? previewDefault?.[1] ?? '';
           return <article className={styles.settingsCard} key={group.title}>
             <div className={styles.settingsCardHead}><div><span className={styles.settingsCardEyebrow}>BAGIAN WEBSITE</span><h3>{group.title}</h3><p>{group.description}</p></div><span className={styles.settingsCount}>{settings.length} opsi</span></div>
-            <div className={styles.settingsCardPreview}><AdminContentPreview section="site_settings" form={{ setting_key: group.previewKey, setting_value: JSON.stringify(previewValue) }} data={data} supabase={supabase} /></div>
+            <button
+              type="button"
+              className={styles.settingsPreviewButton}
+              onClick={() => selectVisualSetting(group.previewKey)}
+              aria-label={`Edit ${group.title}`}
+            >
+              <span className={styles.settingsPreviewAction}>Klik pratinjau ini untuk mengedit {settingLabels[group.previewKey] || group.title} ↗</span>
+              <div className={styles.settingsCardPreview}><AdminContentPreview section="site_settings" form={{ setting_key: group.previewKey, setting_value: JSON.stringify(previewValue) }} data={data} supabase={supabase} /></div>
+            </button>
             <details className={styles.settingsOptions}>
-              <summary>Atur bagian ini <span aria-hidden="true">↓</span></summary>
+              <summary>Lihat semua {settings.length} opsi pengaturan <span aria-hidden="true">↓</span></summary>
               <div className={styles.settingsOptionList}>{settings.map(([key, defaultValue]) => {
                 const row = data.site_settings.find((item) => item.setting_key === key);
                 const currentValue = row?.setting_value ?? defaultValue;

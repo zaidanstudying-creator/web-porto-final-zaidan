@@ -166,10 +166,14 @@
 .settingsCardHead h3 { margin: .25rem 0; color: #f1f0eb; font-size: .94rem; font-weight: 570; }
 .settingsCardHead p { max-width: 30rem; margin: 0; color: #929693; font-size: .67rem; line-height: 1.5; }
 .settingsCount { flex: 0 0 auto; border: 1px solid #3a4041; padding: .22rem .4rem; color: #a5aaa6; font-size: .59rem; }
+.settingsPreviewButton { display: block; width: 100%; border: 0; padding: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; }
+.settingsPreviewButton:hover .settingsCardPreview > aside { border-color: var(--accent); }
+.settingsPreviewButton:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.settingsPreviewAction { display: block; padding: .35rem 1rem .5rem; color: var(--accent); font-size: .62rem; }
 .settingsCardPreview { padding: 0 1rem .85rem; }
-.settingsCardPreview > aside { position: static; gap: .55rem; border-color: #292d2e; padding: .7rem; background: #101112; }
-.settingsCardPreview > aside > p:last-child { display: none; }
-.settingsCardPreview > aside > div:first-child { padding-bottom: .45rem; }
+.settingsCardPreview aside { position: static; gap: .55rem; border-color: #292d2e; padding: .7rem; background: #101112; }
+.settingsCardPreview aside > p:last-child { display: none; }
+.settingsCardPreview aside > div:first-child { padding-bottom: .45rem; }
 .settingsOptions { border-top: 1px solid #343839; }
 .settingsOptions summary { display: flex; min-height: 2.8rem; align-items: center; justify-content: space-between; padding: .5rem 1rem; color: #7ff3ff; font-size: .7rem; cursor: pointer; list-style: none; }
 .settingsOptions summary::-webkit-details-marker { display: none; }
