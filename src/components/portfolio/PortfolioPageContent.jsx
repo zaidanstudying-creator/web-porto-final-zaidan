@@ -21,7 +21,7 @@ import SkillLogoLoops from "@/components/portfolio/SkillLogoLoops";
 const technology = ["HTML", "CSS", "JavaScript", "Laravel", "PHP"];
 export const dynamic = "force-dynamic";
 
-function SectionHeading({ number, title, description, id }) {
+function SectionHeading({ number, title, description, id, editField }) {
   return (
     <div className="section-heading">
       <span className="section-number">{number}</span>
@@ -32,7 +32,7 @@ function SectionHeading({ number, title, description, id }) {
             perspective={700} creaseShading={0.45} hoverRefold refoldRadius={140} refoldAngle={45}
             color="var(--cyan)" className="section-title-fold" />
         </h2>
-        <p className="section-description">{description}</p>
+        <p className="section-description" data-cms-field={editField}>{description}</p>
       </div>
     </div>
   );
@@ -60,11 +60,19 @@ export default function PortfolioPageContent({ initialContent, cmsPreview = fals
     };
     const selectSection = (event) => {
       if (!cmsPreview) return;
-      const target = event.target.closest('[data-cms-setting], [data-cms-section]');
+      const target = event.target.closest('[data-cms-setting], [data-cms-field], [data-cms-record], [data-cms-section]');
       if (target) {
         event.preventDefault();
         event.stopPropagation();
-        window.parent.postMessage({ type: 'portfolio-cms-select', section: target.dataset.cmsSection, settingKey: target.dataset.cmsSetting }, window.location.origin);
+        const sectionTarget = target.closest('[data-cms-section]');
+        const recordTarget = target.closest('[data-cms-record]');
+        window.parent.postMessage({
+          type: 'portfolio-cms-select',
+          section: target.dataset.cmsSection || sectionTarget?.dataset.cmsSection,
+          settingKey: target.dataset.cmsSetting,
+          recordId: target.dataset.cmsRecord || recordTarget?.dataset.cmsRecord,
+          field: target.dataset.cmsField
+        }, window.location.origin);
       }
     };
     window.addEventListener('message', receivePreview);
@@ -94,15 +102,15 @@ export default function PortfolioPageContent({ initialContent, cmsPreview = fals
     <main style={themeStyle}>
       <PortfolioNavigation socialItems={content?.social ?? []} showDesktop={settings['components.pill_nav.enabled'] !== false} />
 
-      <section className="page-shell hero" id="home" aria-labelledby="hero-title" data-cms-section="profiles">
+      <section className="page-shell hero" id="home" aria-labelledby="hero-title" data-cms-section="profiles" data-cms-record={profile?.id}>
         <div className="hero-main" data-cms-setting="hero.text">
           <p className="eyebrow">Personal portfolio <span>/</span> 2026</p>
           <h1 id="hero-title" className="visually-hidden">{name}</h1>
           <HeroAnimations profileName={name} settings={settings} />
-          <div className="hero-intro-copy" data-cms-section="profiles">
+          <div className="hero-intro-copy" data-cms-section="profiles" data-cms-record={profile?.id}>
             <span className="aside-rule" aria-hidden="true" />
             <p className="aside-label">01 / Introduction</p>
-            <p className="hero-description">{profile?.headline || profile?.bio || "Selected work, technical interests, and professional background will be presented here as verified details become available."}</p>
+            <p className="hero-description" data-cms-field="headline">{profile?.headline || profile?.bio || "Selected work, technical interests, and professional background will be presented here as verified details become available."}</p>
             <a className="aside-link" href="#about">Read profile <span aria-hidden="true">↓</span></a>
           </div>
         </div>
@@ -125,8 +133,8 @@ export default function PortfolioPageContent({ initialContent, cmsPreview = fals
       <VelocityTransition texts={velocityTexts} enabled={settings['components.scroll_velocity.enabled'] !== false} />
       <AboutTransition profile={profile} settings={settings} enabled={settings['components.scroll_expand.enabled'] !== false} />
 
-      <section className="page-shell section profile-section" id="profile" aria-labelledby="profile-title" data-cms-section="profiles">
-        <SectionHeading number="01" title="About" id="profile-title" description={profile?.bio || "A concise profile. Personal background details will be added when confirmed."}></SectionHeading>
+      <section className="page-shell section profile-section" id="profile" aria-labelledby="profile-title" data-cms-section="profiles" data-cms-record={profile?.id}>
+        <SectionHeading number="01" title="About" id="profile-title" description={profile?.bio || "A concise profile. Personal background details will be added when confirmed."} editField="bio"></SectionHeading>
         <div className="profile-composition">
           {settings['components.profile_card.enabled'] !== false && <div className="profile-card-column" data-cms-setting="profile_card.name">
             <p className="composition-label">PROFILE CARD / 01</p>
@@ -144,10 +152,10 @@ export default function PortfolioPageContent({ initialContent, cmsPreview = fals
         <SectionHeading number="02" title="Projects" id="projects-title" description={content?.projects?.length ? "Selected work, its context, and the tools behind each project." : "Selected work with context, technologies, and links will appear here once published."}></SectionHeading>
         <div className="projects-content">
           <p className="composition-label">FEATURED PROJECTS / 01</p>
-          {settings['components.card_swap.enabled'] !== false ? <ProjectCardSwap projects={content?.projects ?? []} /> : content?.projects?.length ? <div className="managed-projects">{content.projects.map((project, index) => <article className="managed-project" key={project.id}>
+          {settings['components.card_swap.enabled'] !== false ? <ProjectCardSwap projects={content?.projects ?? []} /> : content?.projects?.length ? <div className="managed-projects">{content.projects.map((project, index) => <article className="managed-project" key={project.id} data-cms-section="projects" data-cms-record={project.id}>
             <span className="managed-project-index">{String(index + 1).padStart(2, '0')}</span>
-            <div className="managed-project-copy"><h3>{project.title}</h3><p>{project.summary || project.description}</p>{project.technologies.length > 0 && <div className="managed-project-tech">{project.technologies.map((technologyName) => <span key={technologyName}>{technologyName}</span>)}</div>}</div>
-            {project.cover_url && <img src={project.cover_url} alt={`${project.title} cover`} />}
+            <div className="managed-project-copy"><h3 data-cms-field="title">{project.title}</h3><p data-cms-field="summary">{project.summary || project.description}</p>{project.technologies.length > 0 && <div className="managed-project-tech">{project.technologies.map((technologyName) => <span key={technologyName}>{technologyName}</span>)}</div>}</div>
+            {project.cover_url && <img src={project.cover_url} alt={`${project.title} cover`} data-cms-field="cover_path" />}
             <div className="managed-project-links">{project.github_url && <a href={project.github_url} target="_blank" rel="noreferrer">GitHub ↗</a>}{project.demo_url && <a href={project.demo_url} target="_blank" rel="noreferrer">Live ↗</a>}</div>
           </article>)}</div> : <EmptyEntry index="01" label="No published projects yet" />}
         </div>
@@ -160,7 +168,7 @@ export default function PortfolioPageContent({ initialContent, cmsPreview = fals
 
       <section className="page-shell section experience-section" id="experience" aria-labelledby="experience-title" data-cms-section="experiences">
         <SectionHeading number="04" title="Experience" id="experience-title" description="Organizations, roles, dates, and responsibilities."></SectionHeading>
-        <div className="entry-list">{content?.experiences?.length ? content.experiences.map((item, index) => <article className="managed-entry" key={item.id}><span className="entry-index">{String(index + 1).padStart(2, '0')}</span><div className="managed-entry-body">{item.logo_url && <img className="managed-entry-logo" src={item.logo_url} alt={`${item.organization} logo`} />}<div><h3>{item.position}</h3><p>{item.organization}{formatPeriod(item.start_date, item.end_date, item.is_current) && ` · ${formatPeriod(item.start_date, item.end_date, item.is_current)}`}</p><small>{item.description}</small></div></div></article>) : <EmptyEntry index="01" label="Published experience will appear here" />}</div>
+        <div className="entry-list">{content?.experiences?.length ? content.experiences.map((item, index) => <article className="managed-entry" key={item.id} data-cms-section="experiences" data-cms-record={item.id}><span className="entry-index">{String(index + 1).padStart(2, '0')}</span><div className="managed-entry-body">{item.logo_url && <img className="managed-entry-logo" src={item.logo_url} alt={`${item.organization} logo`} data-cms-field="logo_path" />}<div><h3 data-cms-field="position">{item.position}</h3><p data-cms-field="organization">{item.organization}{formatPeriod(item.start_date, item.end_date, item.is_current) && ` · ${formatPeriod(item.start_date, item.end_date, item.is_current)}`}</p><small data-cms-field="description">{item.description}</small></div></div></article>) : <EmptyEntry index="01" label="Published experience will appear here" />}</div>
       </section>
 
       <section className="page-shell section history-section" id="history" aria-labelledby="history-title" data-cms-section="history_entries">
@@ -175,7 +183,7 @@ export default function PortfolioPageContent({ initialContent, cmsPreview = fals
 
       <section className="page-shell section contact-section" id="contact" aria-labelledby="contact-title">
         <SectionHeading number="07" title="Contact" id="contact-title" description="A contact form for project enquiries and collaborations."></SectionHeading>
-        {content?.social?.length > 0 && <div className="public-social-links" data-cms-section="social_links">{content.social.map((item) => <a key={item.id} href={item.url} target="_blank" rel="noreferrer">{item.label || item.platform} ↗</a>)}</div>}
+        {content?.social?.length > 0 && <div className="public-social-links" data-cms-section="social_links">{content.social.map((item) => <a key={item.id} data-cms-record={item.id} data-cms-field="label" href={item.url} target="_blank" rel="noreferrer">{item.label || item.platform} ↗</a>)}</div>}
         {settings['components.glow_cursor.enabled'] !== false ? <ContactGlow settings={settings}><ContactForm /></ContactGlow> : <ContactForm />}
       </section>
 

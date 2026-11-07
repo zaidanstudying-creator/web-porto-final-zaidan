@@ -105,6 +105,18 @@ const rowsForSection = (data, section) => section === 'certificates'
     ? (data.history_entries ?? []).filter((row) => !/sertifikat|certificate/i.test(row.category ?? ''))
   : data[section] ?? [];
 
+function makeRecordForm(section, row, data) {
+  return {
+    ...row,
+    ...(section === 'projects' ? {
+      technology_ids: data.project_technologies.filter((item) => item.project_id === row.id).map((item) => item.technology_id),
+      preview_paths: Array.isArray(row.preview_paths) ? row.preview_paths : []
+    } : {}),
+    ...(section === 'certificates' ? { preview_paths: Array.isArray(row.preview_paths) ? row.preview_paths : [] } : {}),
+    ...(section === 'site_settings' ? { setting_value: JSON.stringify(row.setting_value, null, 2) } : {})
+  };
+}
+
 const settingDefaults = [
   ['appearance.primary_accent', '#7FF3FF'], ['appearance.secondary_accent', '#FF5A36'],
   ['hero.text', 'Ihsan Fawwas Zaidan'], ['hero.tech_loop', ['HTML', 'CSS', 'JavaScript', 'Laravel', 'PHP']],
@@ -376,7 +388,10 @@ export default function AdminDashboard({ initialData, initialError }) {
       if (event.origin !== window.location.origin || event.source !== previewFrameRef.current?.contentWindow) return;
       if (event.data?.type === 'portfolio-cms-preview-ready') sendPreview();
       if (event.data?.type === 'portfolio-cms-select' && event.data.settingKey) selectVisualSetting(event.data.settingKey);
-      else if (event.data?.type === 'portfolio-cms-select' && nav.some(([id]) => id === event.data.section)) openSection(event.data.section);
+      else if (event.data?.type === 'portfolio-cms-select' && nav.some(([id]) => id === event.data.section)) {
+        if (event.data.recordId) selectVisualRecord(event.data.section, event.data.recordId, event.data.field);
+        else openSection(event.data.section);
+      }
     };
     window.addEventListener('message', receivePreviewMessage);
     sendPreview();
@@ -399,6 +414,10 @@ export default function AdminDashboard({ initialData, initialError }) {
   }
 
   function selectVisualSetting(key) {
+    if (section === 'site_settings' && form?.setting_key === key) {
+      focusVisualField('site_settings', 'setting_value');
+      return;
+    }
     if (!confirmDiscardChanges()) return;
     const row = data.site_settings.find((item) => item.setting_key === key);
     const fallback = settingDefaults.find(([settingKey]) => settingKey === key)?.[1] ?? '';
@@ -414,17 +433,40 @@ export default function AdminDashboard({ initialData, initialError }) {
     setNotice(null);
   }
 
+  function selectVisualRecord(targetSection, recordId, fieldName) {
+    const previewDraftId = form?.id ?? `preview-${section}`;
+    if (form && String(recordId) === String(previewDraftId) && section === targetSection) {
+      focusVisualField(targetSection, fieldName);
+      return;
+    }
+    if (!confirmDiscardChanges()) return;
+    const row = rowsForSection(data, targetSection).find((item) => String(item.id) === String(recordId));
+    if (!row) { openSection(targetSection); return; }
+    const nextForm = makeRecordForm(targetSection, row, data);
+    setSection(targetSection);
+    setMobileNavOpen(false);
+    setSearch('');
+    setSelectedId(row.id);
+    setForm(nextForm);
+    setSavedForm(JSON.stringify(nextForm));
+    setNotice(null);
+    focusVisualField(targetSection, fieldName);
+  }
+
+  function focusVisualField(targetSection, fieldName) {
+    if (!fieldName) return;
+    window.setTimeout(() => {
+      const input = document.getElementById(`${targetSection}-${fieldName}`)
+        || document.getElementById(`${targetSection}-${fieldName}-media-picker`);
+      input?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      input?.focus({ preventScroll: true });
+    }, 100);
+  }
+
   function editRow(row) {
     if (!confirmDiscardChanges()) return;
     setSelectedId(row.id);
-    const nextForm = { ...row,
-      ...(section === 'projects' ? {
-        technology_ids: data.project_technologies.filter((item) => item.project_id === row.id).map((item) => item.technology_id),
-        preview_paths: Array.isArray(row.preview_paths) ? row.preview_paths : []
-      } : {}),
-      ...(section === 'certificates' ? { preview_paths: Array.isArray(row.preview_paths) ? row.preview_paths : [] } : {}),
-      ...(section === 'site_settings' ? { setting_value: JSON.stringify(row.setting_value, null, 2) } : {})
-    };
+    const nextForm = makeRecordForm(section, row, data);
     setForm(nextForm);
     setSavedForm(JSON.stringify(nextForm));
     setNotice(null);

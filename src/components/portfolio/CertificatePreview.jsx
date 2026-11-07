@@ -145,13 +145,13 @@ export default function CertificatePreview({ items = [] }) {
       touchStart.current = null;
     }}>
     <p className="certificate-preview-kicker">SERTIFIKAT / {String(displayIndex + 1).padStart(2, '0')}</p>
-    <h3 aria-live="polite">{images[displayIndex]?.label}</h3>
+    <h3 aria-live="polite" data-cms-section="certificates" data-cms-record={images[displayIndex]?.entry?.id} data-cms-field="title">{images[displayIndex]?.label}</h3>
     <div className="certificate-vertical-stage">
       {[-1, 0, 1].map((offset) => {
         const index = (displayIndex + offset + images.length) % images.length;
         const image = images[index];
         return <div className={`certificate-vertical-card${offset === 0 ? ' is-active' : ` is-neighbor neighbor-${offset < 0 ? 'top' : 'bottom'}`}`}
-          key={offset} aria-hidden={offset !== 0}>
+          key={offset} aria-hidden={offset !== 0} data-cms-section="certificates" data-cms-record={image.entry?.id} data-cms-field="image_path">
           {offset === 0 ? <RefineFrame key={image.src} src={image.src} alt={`${image.label} certificate`} aspectRatio="16 / 10" />
             : <img src={image.src} alt="" loading="lazy" />}
         </div>;

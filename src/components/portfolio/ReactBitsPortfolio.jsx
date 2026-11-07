@@ -119,11 +119,11 @@ export function HeroAnimations({ profileName = "Ihsan Fawwas Zaidan", settings =
 
 export function TechnologyMarquee({ technologies = [], settings = {} }) {
   if (settings['components.text_loop.enabled'] === false) return null;
-  const text = technologies.length ? technologies.join(" ✦ ") : "HTML ✦ CSS ✦ JavaScript ✦ Laravel ✦ PHP";
-  return <Mounted name="TextLoop" eager className="hero-loop-mount" fallback={<div className="hero-loop-fallback">{text} ✦ {text}</div>}>
+  const text = technologies.length ? technologies.join(" • ") : "HTML • CSS • JavaScript • Laravel • PHP";
+  return <Mounted name="TextLoop" eager className="hero-loop-mount" fallback={<div className="hero-loop-fallback">{text} • {text}</div>}>
     {(mod) => {
       const TextLoop = mod.default;
-      return <TextLoop text={text} shape="line" speed={120} direction="forward" separator="✦"
+      return <TextLoop text={text} shape="line" speed={120} direction="forward" separator="•"
         curviness={90} tilt={0} fontSize={54} fontWeight={800} textOffsetY={8} letterSpacing={1} uppercase
         ribbon ribbonColor={settings['appearance.secondary_accent'] || "#ff5a36"} ribbonWidth={96}
         edgeFade={0} cross crossAngle={14} draggable scrollBoost={0} outline={false} pauseOnHover
@@ -344,6 +344,7 @@ export function ProjectCardSwap({ projects = [] }) {
         width={cardWidth} height={cardHeight} onCardClick={(index) => setSelectedProject(visibleProjects[index] ?? null)}>
         {visibleProjects.length ? visibleProjects.map((project, index) => (
           <Card key={project.id} customClass="portfolio-project-card" role="group" tabIndex={0}
+            data-cms-section="projects" data-cms-record={project.id} data-cms-field="title"
             aria-label={`${project.title}. Enter or Space to view project details.`}
             onKeyDown={(event) => {
               if (event.key === 'Enter' || event.key === ' ') {
@@ -354,7 +355,7 @@ export function ProjectCardSwap({ projects = [] }) {
             <span className="project-card-index">PROJECT / {String(index + 1).padStart(2, '0')}</span>
             {project.cover_url ? (
               <div className="project-card-cover" data-missing="false">
-                <img src={project.cover_url} alt={`${project.title} project cover`} draggable={false}
+                <img src={project.cover_url} alt={`${project.title} project cover`} draggable={false} data-cms-field="cover_path"
                   onError={(event) => { event.currentTarget.remove(); event.currentTarget.parentElement.dataset.missing = 'true'; }} />
                 <span aria-hidden="true">Cover image unavailable</span>
               </div>
@@ -362,8 +363,8 @@ export function ProjectCardSwap({ projects = [] }) {
               <div className="project-card-cover project-card-no-cover"><strong>{project.title.slice(0, 2).toUpperCase()}</strong><span>Cover image pending</span></div>
             )}
             <div className="project-card-copy">
-              <h3>{project.title}</h3>
-              {(project.summary || project.description) && <p>{project.summary || project.description}</p>}
+              <h3 data-cms-field="title">{project.title}</h3>
+              {(project.summary || project.description) && <p data-cms-field="summary">{project.summary || project.description}</p>}
               {project.technologies.length > 0 && <div className="project-card-tech">{project.technologies.slice(0, 4).map((technology) => <span key={technology}>{technology}</span>)}</div>}
               {(project.demo_url || project.github_url) && <div className="project-card-links">
                 {project.demo_url && <a href={project.demo_url} target="_blank" rel="noreferrer">Live project ↗</a>}

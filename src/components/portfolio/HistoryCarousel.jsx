@@ -89,6 +89,8 @@ export default function HistoryCarousel({ items = [] }) {
             className={`history-slide${isRevealed ? ' is-revealed' : ''}${animatingId === itemId ? ' is-animating' : ''}`}
             key={itemId}
             data-blur-ready={ready ? 'true' : 'false'}
+            data-cms-section="history_entries"
+            data-cms-record={item.id}
             role="group"
             aria-roledescription="slide"
             aria-label={`${activeIndex + 1} of ${items.length}: ${item.title}`}
@@ -100,9 +102,9 @@ export default function HistoryCarousel({ items = [] }) {
               <span className="history-slide-year">{getYear(item.event_date)}</span>
               <span className="history-slide-copy">
                 <span className="history-slide-category">{item.category}</span>
-                <span className="history-slide-title">{item.title}</span>
-                {item.description && <span className="history-slide-description">{item.description}</span>}
-                {item.image_url && <img className="history-image" src={item.image_url} alt="" />}
+                <span className="history-slide-title" data-cms-field="title">{item.title}</span>
+                {item.description && <span className="history-slide-description" data-cms-field="description">{item.description}</span>}
+                {item.image_url && <img className="history-image" src={item.image_url} alt="" data-cms-field="image_path" />}
                 <span className="history-slide-more">Lihat detail <span aria-hidden="true">↗</span></span>
               </span>
             </button>
