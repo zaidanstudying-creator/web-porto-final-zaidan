@@ -178,7 +178,7 @@
 .settingsOptions summary { display: flex; min-height: 2.8rem; align-items: center; justify-content: space-between; padding: .5rem 1rem; color: #7ff3ff; font-size: .7rem; cursor: pointer; list-style: none; }
 .settingsOptions summary::-webkit-details-marker { display: none; }
 .settingsOptions[open] summary { border-bottom: 1px solid #292d2e; }
-.settingsOptionList { display: grid; max-height: 24rem; overflow-y: auto; padding: 0 1rem .6rem; }
+.settingsOptionList { display: grid; padding: 0 1rem .6rem; }
 .settingsOption { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: .6rem; border-bottom: 1px solid #292d2e; padding: .5rem 0; }
 .settingsOption > span { display: grid; min-width: 0; gap: .15rem; }
 .settingsOption strong { color: #c8cbc7; font-size: .66rem; font-weight: 500; }
@@ -395,7 +395,6 @@
 
 .contentWorkbenchEditing { grid-template-columns: minmax(0,1fr); }
 .contentLibraryEditing { display: none; }
-.settingsStudioEditing .settingsCards { display: none; }
 .editorHeadActions { display: flex; flex: 0 0 auto; align-items: center; gap: .5rem; }
 .backToList { min-height: 2.45rem; border: 1px solid #3b4545; border-radius: .22rem; padding: .4rem .65rem; background: transparent; color: #cbd2ce; font: inherit; font-size: .68rem; cursor: pointer; }
 .backToList:hover { border-color: var(--accent); color: var(--accent); }
