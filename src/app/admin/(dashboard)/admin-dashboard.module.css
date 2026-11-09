@@ -190,6 +190,8 @@
 .inlineSettingForm { display: grid; gap: .8rem; margin: .2rem 0 .8rem; border: 1px solid #354344; padding: .8rem; background: #101516; }
 .inlineSettingForm .formGrid { padding: 0; }
 .inlineSettingForm .formActions { border: 0; padding: 0; }
+.inlineSettingForm .liveSitePreview { position: static; }
+.inlineSettingForm .liveSitePreview iframe { width: 200%; height: 110svh; }
 .settingsIntro h2,.mediaUpload h2 { margin: 0; font-size: .92rem; font-weight: 550; }
 .settingsIntro p,.mediaUpload p { margin: .3rem 0 .9rem; color: #929693; font-size: .7rem; }
 .defaults { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0 1.5rem; }

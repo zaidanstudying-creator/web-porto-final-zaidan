@@ -298,7 +298,10 @@ function makeLivePreview(data, section, form, supabase) {
   };
 
   let profile = data.profiles?.find((row) => row.is_primary) ?? data.profiles?.[0] ?? null;
-  if (section === 'profiles' && form) profile = { ...profile, ...form };
+  if (section === 'profiles' && form) {
+    profile = { ...profile, ...form };
+    if (typeof form.professional_title === 'string') settings['profile_card.title'] = form.professional_title;
+  }
   if (profile) profile = { ...profile, avatar_url: previewImageUrl(supabase, profile.avatar_path), profile_icon_url: previewImageUrl(supabase, profile.profile_icon_path) };
 
   const projectRows = inject(projects, section === 'projects' ? form : null);
@@ -318,6 +321,9 @@ function makeLivePreview(data, section, form, supabase) {
     let value = form.setting_value;
     try { value = JSON.parse(value); } catch {}
     settings[form.setting_key] = value;
+    if (form.setting_key === 'profile_card.title' && profile && typeof value === 'string') {
+      profile = { ...profile, professional_title: value };
+    }
   }
   const publicSettings = Object.fromEntries(Object.entries(settings).map(([key, value]) => [
     key,
@@ -520,6 +526,7 @@ export default function AdminDashboard({ initialData, initialError }) {
 
   function changeField(name, value) {
     setForm((current) => ({ ...current, [name]: value }));
+    setNotice(null);
   }
 
   async function saveRow(event) {
@@ -553,6 +560,25 @@ export default function AdminDashboard({ initialData, initialError }) {
       : supabase.from(table).insert(payload);
     const { data: saved, error } = await request.select().single();
     if (error) { setBusy(false); setNotice({ kind: 'error', text: error.message }); return; }
+    let mirroredProfile = null;
+    let mirroredSetting = null;
+    let mirrorError = null;
+    if (section === 'site_settings' && form.setting_key === 'profile_card.title') {
+      const primaryProfile = data.profiles.find((item) => item.is_primary) ?? data.profiles[0];
+      if (primaryProfile) {
+        const result = await supabase.from('profiles').update({ professional_title: payload.setting_value }).eq('id', primaryProfile.id).select().single();
+        mirroredProfile = result.data;
+        mirrorError = result.error;
+      }
+    } else if (section === 'profiles' && Object.hasOwn(payload, 'professional_title')) {
+      const titleSetting = data.site_settings.find((item) => item.setting_key === 'profile_card.title');
+      const settingQuery = titleSetting
+        ? supabase.from('site_settings').update({ setting_value: payload.professional_title }).eq('id', titleSetting.id)
+        : supabase.from('site_settings').insert({ setting_key: 'profile_card.title', setting_value: payload.professional_title });
+      const result = await settingQuery.select().single();
+      mirroredSetting = result.data;
+      mirrorError = result.error;
+    }
     if (section === 'projects') {
       const currentLinks = data.project_technologies.filter((item) => item.project_id === saved.id);
       const selectedIds = new Set(selectedTechnologyIds);
@@ -572,9 +598,24 @@ export default function AdminDashboard({ initialData, initialError }) {
       ] }));
     }
     setBusy(false);
-    setData((current) => ({ ...current, [table]: selectedId
-      ? current[table].map((item) => item.id === selectedId ? saved : item)
-      : [...current[table], saved] }));
+    setData((current) => {
+      const savedRows = selectedId
+        ? current[table].map((item) => item.id === selectedId ? saved : item)
+        : [...current[table], saved];
+      const nextData = { ...current, [table]: savedRows };
+      if (mirroredProfile) {
+        nextData.profiles = current.profiles.some((item) => item.id === mirroredProfile.id)
+          ? (table === 'profiles' ? savedRows : current.profiles).map((item) => item.id === mirroredProfile.id ? mirroredProfile : item)
+          : [...(table === 'profiles' ? savedRows : current.profiles), mirroredProfile];
+      }
+      if (mirroredSetting) {
+        const settingRows = table === 'site_settings' ? savedRows : current.site_settings;
+        nextData.site_settings = settingRows.some((item) => item.id === mirroredSetting.id)
+          ? settingRows.map((item) => item.id === mirroredSetting.id ? mirroredSetting : item)
+          : [...settingRows, mirroredSetting];
+      }
+      return nextData;
+    });
     setSelectedId(saved.id);
     const nextForm = { ...saved,
       ...(section === 'projects' ? { technology_ids: selectedTechnologyIds } : {}),
@@ -582,7 +623,9 @@ export default function AdminDashboard({ initialData, initialError }) {
     };
     setForm(nextForm);
     setSavedForm(JSON.stringify(nextForm));
-    setNotice({ kind: 'success', text: 'Perubahan tersimpan. Buka atau muat ulang website untuk melihat hasilnya.' });
+    setNotice(mirrorError
+      ? { kind: 'error', text: `Perubahan tersimpan, tetapi judul belum tersinkron ke bagian lain: ${mirrorError.message}` }
+      : { kind: 'success', text: 'Perubahan tersimpan dan pratinjau di sini sudah diperbarui. Muat ulang tab website lain jika masih terbuka.' });
   }
 
   async function deleteRow(row) {
@@ -961,6 +1004,10 @@ export default function AdminDashboard({ initialData, initialError }) {
                       <button type="submit" className={styles.primaryButton} disabled={busy}>{busy ? 'Menyimpan…' : 'Simpan perubahan'}</button>
                       <button type="button" className={styles.cancelButton} onClick={closeInlineSettingEditor}>Tutup editor</button>
                     </div>
+                    <p className={isDirty ? styles.dirtyState : styles.savedState} role="status">
+                      {isDirty ? 'Belum tersimpan. Pratinjau di bawah tetap mengikuti perubahan ini.' : 'Tersimpan. Pratinjau dan halaman website memakai nilai yang sama.'}
+                    </p>
+                    <LiveWebsitePreview frameRef={previewFrameRef} content={livePreviewContent} />
                   </form>}
                 </div>;
             })}</div>
