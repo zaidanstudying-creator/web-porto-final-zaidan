@@ -70,7 +70,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .hero-tech-loop { width: 100%; height: auto; align-self: center; justify-self: center; }
 .hero-loop-fallback { width: max-content; color: var(--secondary-accent,#ff5a36); font-size: clamp(1.5rem,4vw,3.8rem); font-weight: 800; letter-spacing: -.04em; white-space: nowrap; animation: hero-marquee 18s linear infinite; }
 @keyframes hero-marquee { to { transform: translateX(-50%); } }
-.hero-role { margin: 1.6rem 0 0; color: #c8cbc7; font-size: clamp(.95rem,1.5vw,1.15rem); font-weight: 450; letter-spacing: -.015em; }
+.hero-role { margin: 1.6rem 0 0; color: #c8cbc7; font-size: clamp(.95rem,1.5vw,1.15rem); font-weight: 450; letter-spacing: -.015em; white-space: pre-line; }
 .hero-links { display: flex; flex-wrap: wrap; gap: 1.8rem; margin-top: 2.6rem; }
 .hero-links a,.aside-link { display: inline-flex; align-items: center; gap: .55rem; padding-block: .25rem; border-bottom: 1px solid #5e6664; color: var(--foreground); font-size: .75rem; transition: border-color 160ms ease,color 160ms ease; }
 .hero-links a:hover,.aside-link:hover { border-color: var(--cyan); color: var(--cyan); }
