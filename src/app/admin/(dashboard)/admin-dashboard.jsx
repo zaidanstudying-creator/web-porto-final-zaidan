@@ -529,6 +529,22 @@ export default function AdminDashboard({ initialData, initialError }) {
     setNotice(null);
   }
 
+  function handleEditorKeyDown(event) {
+    if (event.key !== 'Enter' || event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return;
+    const target = event.target;
+    if (target instanceof HTMLTextAreaElement) {
+      if (event.metaKey || event.ctrlKey) {
+        event.preventDefault();
+        target.form?.requestSubmit();
+      }
+      return;
+    }
+    if (target instanceof HTMLInputElement && target.type === 'text') {
+      event.preventDefault();
+      target.form?.requestSubmit();
+    }
+  }
+
   async function saveRow(event) {
     event.preventDefault();
     const schema = fields[section];
@@ -888,13 +904,7 @@ export default function AdminDashboard({ initialData, initialError }) {
     </label>;
     if (settingKey === 'profile_card.title' && typeof parsedSetting === 'string') return <label className={`${styles.field} ${styles.wide}`} key={name}>
       <span>{displayLabel}</span>{helpText && <small>{helpText}</small>}
-      <textarea id={`${section}-${name}`} rows={3} value={parsedSetting} onChange={(event) => changeField(name, JSON.stringify(event.target.value))}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' && (event.metaKey || event.ctrlKey) && !event.nativeEvent.isComposing) {
-            event.preventDefault();
-            event.currentTarget.form?.requestSubmit();
-          }
-        }} />
+      <textarea id={`${section}-${name}`} rows={3} value={parsedSetting} onChange={(event) => changeField(name, JSON.stringify(event.target.value))} />
       <small>Tekan Enter untuk baris baru. Tekan ⌘/Ctrl + Enter untuk menyimpan.</small>
     </label>;
     if (settingKey === 'scroll_expand.description' && typeof parsedSetting === 'string') return <label className={`${styles.field} ${styles.wide}`} key={name}>
@@ -903,13 +913,7 @@ export default function AdminDashboard({ initialData, initialError }) {
     </label>;
     if (settingKey && typeof parsedSetting === 'string') return <label className={styles.field} key={name}>
       <span>{displayLabel}</span>{helpText && <small>{helpText}</small>}<input type="text" value={parsedSetting} maxLength={500}
-        onChange={(event) => changeField(name, JSON.stringify(event.target.value))}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
-            event.preventDefault();
-            event.currentTarget.form?.requestSubmit();
-          }
-        }} />
+        onChange={(event) => changeField(name, JSON.stringify(event.target.value))} />
       <small>Tekan Enter untuk menyimpan.</small>
     </label>;
     if (type === 'multi') return <fieldset className={`${styles.field} ${styles.wide} ${styles.multiField}`} key={name}>
@@ -928,15 +932,11 @@ export default function AdminDashboard({ initialData, initialError }) {
     if (type === 'textarea' || type === 'json') return <label className={`${styles.field} ${styles.wide}`} key={name}>
       <span>{label}{required && <b aria-hidden="true"> *</b>}{fieldHint && <small>{fieldHint}</small>}</span><textarea id={`${section}-${name}`} name={name} rows={type === 'json' ? 5 : 4} required={required} value={value ?? ''} onChange={(event) => changeField(name, event.target.value)} spellCheck={type !== 'json'} />
       {type === 'json' && <small>String, angka, boolean, atau array JSON sesuai jenis pengaturan.</small>}
+      {type === 'textarea' && <small>Tekan Enter untuk baris baru. Tekan ⌘/Ctrl + Enter untuk menyimpan.</small>}
     </label>;
     return <label className={styles.field} key={name}>
-      <span>{label}{required && <b aria-hidden="true"> *</b>}{fieldHint && <small>{fieldHint}</small>}</span><input id={`${section}-${name}`} name={name} type={type} required={required} readOnly={section === 'site_settings' && name === 'setting_key' && Boolean(selectedId)} disabled={section === 'experiences' && name === 'end_date' && form?.is_current} value={value ?? ''} onChange={(event) => changeField(name, event.target.value)}
-        onKeyDown={(event) => {
-          if (type === 'text' && event.key === 'Enter' && !event.nativeEvent.isComposing) {
-            event.preventDefault();
-            event.currentTarget.form?.requestSubmit();
-          }
-        }} />
+      <span>{label}{required && <b aria-hidden="true"> *</b>}{fieldHint && <small>{fieldHint}</small>}</span><input id={`${section}-${name}`} name={name} type={type} required={required} enterKeyHint={type === 'text' ? 'done' : undefined} readOnly={section === 'site_settings' && name === 'setting_key' && Boolean(selectedId)} disabled={section === 'experiences' && name === 'end_date' && form?.is_current} value={value ?? ''} onChange={(event) => changeField(name, event.target.value)} />
+      {type === 'text' && <small>Tekan Enter untuk menyimpan.</small>}
       {section === 'site_settings' && name === 'setting_key' && selectedId && <small>Kunci ini sudah terhubung ke komponen website dan tidak dapat diubah.</small>}
     </label>;
   }
@@ -997,7 +997,7 @@ export default function AdminDashboard({ initialData, initialError }) {
                 return <div className={styles.settingsOptionWrap} key={key}>
                   <div className={styles.settingsOption}><span><strong>{settingLabels[key] || key}</strong><small>{valueText}</small></span>
                     <button type="button" onClick={() => editSettingInline(key)}>Atur</button></div>
-                  {isEditing && <form className={styles.inlineSettingForm} onSubmit={saveRow}>
+                  {isEditing && <form className={styles.inlineSettingForm} onSubmit={saveRow} onKeyDown={handleEditorKeyDown}>
                     <div className={styles.formGrid}>{fields.site_settings.map(renderField)}</div>
                     {notice && <p className={notice.kind === 'error' ? styles.errorNotice : styles.successNotice} role={notice.kind === 'error' ? 'alert' : 'status'}>{notice.text}</p>}
                     <div className={styles.formActions}>
@@ -1057,7 +1057,7 @@ export default function AdminDashboard({ initialData, initialError }) {
         <section className={`${styles.editor} ${section === 'site_settings' ? styles.settingsEditor : fields[section] ? styles.contentEditor : ''}`} id={section === 'site_settings' ? 'settings-editor' : fields[section] ? 'content-editor' : undefined} aria-label={`${pageTitle} editor`}>
           {section === 'contact_messages' ? <MessageViewer row={data.contact_messages.find((item) => item.id === selectedId)} onStatus={updateMessage} onDelete={deleteMessage} busy={busy} />
             : section === 'media_assets' ? <MediaViewer rows={data.media_assets} supabase={supabase} getReferences={(asset) => mediaReferences(asset, data)} onDelete={deleteMedia} busy={busy} />
-            : form && fields[section] ? <div className={styles.editorLayout}><form className={styles.editForm} onSubmit={saveRow}>
+            : form && fields[section] ? <div className={styles.editorLayout}><form className={styles.editForm} onSubmit={saveRow} onKeyDown={handleEditorKeyDown}>
               <div className={styles.editorHead}><div><p className={styles.crumb}>{section === 'site_settings' ? 'PENGATURAN' : selectedId ? 'EDIT KONTEN' : 'KONTEN BARU'}</p><h2>{selectedId ? (section === 'site_settings' ? settingLabels[form.setting_key] || recordName(section, form) : recordName(section, form)) : `Tambah ${pageTitle.toLowerCase()}`}</h2><p className={styles.editorDescription}>Perubahan terlihat langsung pada pratinjau website. Simpan jika sudah sesuai.</p></div><div className={styles.editorHeadActions}>{selectedId && section !== 'site_settings' && <button type="button" className={styles.deleteButton} disabled={busy} onClick={() => deleteRow(form)}>Hapus</button>}{section !== 'site_settings' && <button type="button" className={styles.backToList} onClick={() => { if (!confirmDiscardChanges()) return; setForm(null); setSavedForm(null); setSelectedId(null); }}>Daftar konten</button>}</div></div>
               <div className={styles.formGrid}>{fields[section].map(renderField)}</div>
               {form && <p className={isDirty ? styles.dirtyState : styles.savedState}>{isDirty ? 'Ada perubahan yang belum disimpan.' : selectedId ? 'Semua perubahan sudah tersimpan.' : 'Isi konten baru, lalu simpan untuk menampilkannya.'}</p>}

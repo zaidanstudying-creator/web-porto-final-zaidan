@@ -95,9 +95,9 @@ export default function PortfolioPageContent({ initialContent, cmsPreview = fals
     ? settings['scroll_velocity.texts']
     : ["Full Stack Web Developer", "AI Assistant"];
   const previousJobTitles = new Set([profile?.professional_title, "Full Stack Web Developer"]);
-  const velocityTexts = savedVelocityTexts.map((text) => previousJobTitles.has(text)
-    ? String(title).replace(/\s*\n\s*/g, ' ')
-    : text);
+  const velocityTexts = savedVelocityTexts.flatMap((text) => previousJobTitles.has(text)
+    ? String(title).split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
+    : [text]);
   const primaryAccent = typeof settings['appearance.primary_accent'] === 'string' ? settings['appearance.primary_accent'] : undefined;
   const secondaryAccent = typeof settings['appearance.secondary_accent'] === 'string' ? settings['appearance.secondary_accent'] : undefined;
   const themeStyle = {
