@@ -50,11 +50,17 @@ export default async function HomePage() {
   const profile = content?.profile;
   const settings = content?.settings ?? {};
   const name = settings['hero.text'] || profile?.full_name || "Ihsan Fawwas Zaidan";
-  const title = profile?.professional_title || "Full Stack Web Developer";
+  const title = settings['profile_card.title'] || profile?.professional_title || "Full Stack Web Developer";
   const technologies = content?.technologies?.length ? content.technologies.map((item) => item.name) : technology;
   const certificates = content?.history?.filter((item) => /sertifikat|certificate/i.test(item.category || '')) ?? [];
   const historyEntries = content?.history?.filter((item) => !/sertifikat|certificate/i.test(item.category || '')) ?? [];
-  const velocityTexts = settings['scroll_velocity.texts'];
+  const savedVelocityTexts = Array.isArray(settings['scroll_velocity.texts'])
+    ? settings['scroll_velocity.texts']
+    : ["Full Stack Web Developer", "AI Assistant"];
+  const previousJobTitles = new Set([profile?.professional_title, "Full Stack Web Developer"]);
+  const velocityTexts = savedVelocityTexts.flatMap((text) => previousJobTitles.has(text)
+    ? String(title).split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
+    : [text]);
   const primaryAccent = typeof settings['appearance.primary_accent'] === 'string' ? settings['appearance.primary_accent'] : undefined;
   const secondaryAccent = typeof settings['appearance.secondary_accent'] === 'string' ? settings['appearance.secondary_accent'] : undefined;
   const themeStyle = {
