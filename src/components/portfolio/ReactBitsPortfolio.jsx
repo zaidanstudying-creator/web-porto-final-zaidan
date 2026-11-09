@@ -135,7 +135,13 @@ export function TechnologyMarquee({ technologies = [], settings = {} }) {
 export function VelocityTransition({ texts, enabled = true }) {
   if (!enabled) return null;
   const velocityTexts = Array.isArray(texts) && texts.length ? texts : ["Full Stack Web Developer", "AI Assistant"];
-  return <Mounted name="ScrollVelocity" suspendOffscreen className="velocity-mount" fallback={<div className="velocity-fallback">FULL STACK WEB DEVELOPER <span>•</span> AI ASSISTANT</div>}>
+  const fallbackTexts = velocityTexts.flatMap((text) => String(text).split(/\r?\n/).map((line) => line.trim()).filter(Boolean));
+  return <Mounted name="ScrollVelocity" suspendOffscreen className="velocity-mount" fallback={<div className="velocity-fallback" aria-label={fallbackTexts.join(' · ')}>
+    {fallbackTexts.map((text, index) => <div className={`velocity-fallback-row ${index % 2 ? 'velocity-fallback-row-reverse' : ''}`} key={`${index}-${text}`}>
+      <span>{text}</span><span className="velocity-fallback-separator" aria-hidden="true">•</span>
+      <span aria-hidden="true">{text}</span><span className="velocity-fallback-separator" aria-hidden="true">•</span>
+    </div>)}
+  </div>}>
     {(mod) => {
       const ScrollVelocity = mod.default;
       return <ScrollVelocity texts={velocityTexts} velocity={250}
