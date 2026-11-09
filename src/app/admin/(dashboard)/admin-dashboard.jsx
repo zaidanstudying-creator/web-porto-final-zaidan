@@ -842,13 +842,31 @@ export default function AdminDashboard({ initialData, initialError }) {
         onChange={(event) => changeField(name, JSON.stringify(event.target.value.split('\n').map((item) => item.trim()).filter(Boolean).slice(0, 12)))} />
       <small>Tekan Enter untuk menambah baris baru.</small>
     </label>;
+    if (settingKey === 'profile_card.title' && typeof parsedSetting === 'string') return <label className={`${styles.field} ${styles.wide}`} key={name}>
+      <span>{displayLabel}</span>{helpText && <small>{helpText}</small>}
+      <textarea id={`${section}-${name}`} rows={3} value={parsedSetting} onChange={(event) => changeField(name, JSON.stringify(event.target.value))}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' && (event.metaKey || event.ctrlKey) && !event.nativeEvent.isComposing) {
+            event.preventDefault();
+            event.currentTarget.form?.requestSubmit();
+          }
+        }} />
+      <small>Tekan Enter untuk baris baru. Tekan ⌘/Ctrl + Enter untuk menyimpan.</small>
+    </label>;
     if (settingKey === 'scroll_expand.description' && typeof parsedSetting === 'string') return <label className={`${styles.field} ${styles.wide}`} key={name}>
       <span>{displayLabel}</span>{helpText && <small>{helpText}</small>}<textarea rows={5} value={parsedSetting} maxLength={500}
         onChange={(event) => changeField(name, JSON.stringify(event.target.value))} />
     </label>;
     if (settingKey && typeof parsedSetting === 'string') return <label className={styles.field} key={name}>
       <span>{displayLabel}</span>{helpText && <small>{helpText}</small>}<input type="text" value={parsedSetting} maxLength={500}
-        onChange={(event) => changeField(name, JSON.stringify(event.target.value))} />
+        onChange={(event) => changeField(name, JSON.stringify(event.target.value))}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
+            event.preventDefault();
+            event.currentTarget.form?.requestSubmit();
+          }
+        }} />
+      <small>Tekan Enter untuk menyimpan.</small>
     </label>;
     if (type === 'multi') return <fieldset className={`${styles.field} ${styles.wide} ${styles.multiField}`} key={name}>
       <legend>{label}</legend>{fieldHint && <small>{fieldHint}</small>}{data.technologies.length ? <div className={styles.multiOptions}>{data.technologies.map((technology) => <label key={technology.id}>
@@ -868,7 +886,13 @@ export default function AdminDashboard({ initialData, initialError }) {
       {type === 'json' && <small>String, angka, boolean, atau array JSON sesuai jenis pengaturan.</small>}
     </label>;
     return <label className={styles.field} key={name}>
-      <span>{label}{required && <b aria-hidden="true"> *</b>}{fieldHint && <small>{fieldHint}</small>}</span><input id={`${section}-${name}`} name={name} type={type} required={required} readOnly={section === 'site_settings' && name === 'setting_key' && Boolean(selectedId)} disabled={section === 'experiences' && name === 'end_date' && form?.is_current} value={value ?? ''} onChange={(event) => changeField(name, event.target.value)} />
+      <span>{label}{required && <b aria-hidden="true"> *</b>}{fieldHint && <small>{fieldHint}</small>}</span><input id={`${section}-${name}`} name={name} type={type} required={required} readOnly={section === 'site_settings' && name === 'setting_key' && Boolean(selectedId)} disabled={section === 'experiences' && name === 'end_date' && form?.is_current} value={value ?? ''} onChange={(event) => changeField(name, event.target.value)}
+        onKeyDown={(event) => {
+          if (type === 'text' && event.key === 'Enter' && !event.nativeEvent.isComposing) {
+            event.preventDefault();
+            event.currentTarget.form?.requestSubmit();
+          }
+        }} />
       {section === 'site_settings' && name === 'setting_key' && selectedId && <small>Kunci ini sudah terhubung ke komponen website dan tidak dapat diubah.</small>}
     </label>;
   }
